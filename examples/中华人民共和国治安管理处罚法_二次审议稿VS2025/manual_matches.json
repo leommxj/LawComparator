@@ -1,0 +1,65 @@
+{
+  "manual_matches": [
+    {
+      "old_number": "19",
+      "new_number": "19",
+      "type": "manual"
+    },
+    {
+      "old_number": "32",
+      "new_number": "32",
+      "type": "manual"
+    },
+    {
+      "old_number": "47",
+      "new_number": "46",
+      "type": "manual"
+    },
+    {
+      "old_number": "84",
+      "new_number": "85",
+      "type": "manual"
+    },
+    {
+      "old_number": "92",
+      "new_number": "93",
+      "type": "manual"
+    },
+    {
+      "old_number": "101",
+      "new_number": "102",
+      "type": "manual"
+    },
+    {
+      "old_number": "133",
+      "new_number": "134",
+      "type": "manual"
+    },
+    {
+      "old_number": "140",
+      "new_number": "141",
+      "type": "manual"
+    },
+    {
+      "old_number": "143",
+      "new_number": "144",
+      "type": "manual"
+    },
+    {
+      "old_number": "119",
+      "new_number": "120",
+      "type": "manual"
+    },
+    {
+      "old_number": "107",
+      "new_number": "108",
+      "type": "manual"
+    },
+    {
+      "old_number": "46",
+      "new_number": "60",
+      "type": "manual"
+    }
+  ],
+  "total_matches": 12
+}

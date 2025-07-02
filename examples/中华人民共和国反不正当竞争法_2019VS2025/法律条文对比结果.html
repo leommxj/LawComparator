@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>法律条文对比结果</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+
+        .metadata {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .metadata-item {
+            display: inline-block;
+            margin-right: 30px;
+            margin-bottom: 10px;
+        }
+
+        .metadata-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #f1f3f4;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .identical .stat-number { color: #17a2b8; }
+        .modified .stat-number { color: #ffc107; }
+        .deleted .stat-number { color: #dc3545; }
+        .new .stat-number { color: #28a745; }
+
+        .filters {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filter-button {
+            padding: 8px 16px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .filter-button.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .filter-button:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+        }
+
+        .content {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-title:hover {
+            transform: translateX(5px);
+        }
+
+        .section-title .toggle-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .section-title.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .section-identical .section-title {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #0277bd;
+        }
+
+        .section-modified .section-title {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            color: #f57c00;
+        }
+
+        .section-deleted .section-title {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            color: #c62828;
+        }
+
+        .section-new .section-title {
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            color: #2e7d32;
+        }
+
+        .articles-list {
+            display: block;
+            transition: all 0.5s ease;
+        }
+
+        .articles-list.collapsed {
+            display: none;
+        }
+
+        .article-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .article-item:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        /* 文本对比高亮样式 */
+        .diff-deleted {
+            background-color: #ffdddd;
+            color: #721c24;
+            padding: 2px 4px;
+            border-radius: 3px;
+            text-decoration: line-through;
+            border: 1px solid #f5c6cb;
+            margin: 0 1px;
+        }
+
+        .diff-added {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid #c3e6cb;
+            margin: 0 1px;
+        }
+
+        /* 增强对比容器样式 */
+        .diff-container {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+        }
+
+        .diff-panel {
+            flex: 1;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .diff-header {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            font-weight: 600;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        .diff-content {
+            padding: 15px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+
+
+        /* 统一对比显示样式 */
+        .unified-diff {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+
+        .unified-diff-header {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .diff-container {
+                flex-direction: column;
+            }
+            
+            .diff-panel {
+                margin-bottom: 15px;
+            }
+        }
+
+        .article-header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .article-number {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .similarity-badge {
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
+        .similarity-badge.medium {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .similarity-badge.low {
+            background: #dc3545;
+        }
+
+        .chapter-info {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .expand-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .article-header.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .article-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .article-content.expanded {
+            display: block;
+        }
+
+        .diff-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .diff-panel {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .diff-header {
+            padding: 10px 15px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .diff-old .diff-header {
+            background: #dc3545;
+        }
+
+        .diff-new .diff-header {
+            background: #28a745;
+        }
+
+        .diff-content {
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .diff-old .diff-content {
+            background: #fff5f5;
+        }
+
+        .diff-new .diff-content {
+            background: #f0fff4;
+        }
+
+        .highlight-removed {
+            background: #ffdddd;
+            text-decoration: line-through;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .highlight-added {
+            background: #ddffdd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .changes-list {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .changes-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .change-item {
+            padding: 5px 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .identical-content {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            line-height: 1.8;
+        }
+
+        .empty-section {
+            text-align: center;
+            padding: 30px;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .diff-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .filters {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 法律条文对比结果</h1>
+            <p>智能对比分析，支持差异展示与详细查看</p>
+        </div>
+
+        <div class="metadata" id="metadata">
+            <!-- 元数据将在这里动态生成 -->
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-item identical">
+                <div class="stat-number" id="identicalCount">0</div>
+                <div class="stat-label">相同条文</div>
+            </div>
+            <div class="stat-item modified">
+                <div class="stat-number" id="modifiedCount">0</div>
+                <div class="stat-label">修改条文</div>
+            </div>
+            <div class="stat-item deleted">
+                <div class="stat-number" id="deletedCount">0</div>
+                <div class="stat-label">删除条文</div>
+            </div>
+            <div class="stat-item new">
+                <div class="stat-number" id="newCount">0</div>
+                <div class="stat-label">新增条文</div>
+            </div>
+        </div>
+
+        <div class="filters" id="filters">
+            <span>显示类型：</span>
+            <button class="filter-button active" data-filter="all">全部</button>
+            <button class="filter-button" data-filter="modified">修改条文</button>
+            <button class="filter-button" data-filter="identical">相同条文</button>
+            <button class="filter-button" data-filter="deleted">删除条文</button>
+            <button class="filter-button" data-filter="new">新增条文</button>
+        </div>
+
+        <div class="content" id="content">
+            <!-- 内容将在这里动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        // 嵌入的比较数据
+        const COMPARISON_DATA = {
+  "metadata": {
+    "law1_file": "中华人民共和国反不正当竞争法2019.txt",
+    "law2_file": "中华人民共和国反不正当竞争法2025.txt"
+  },
+  "comparison_result": {
+    "identical": [
+      {
+        "old_number": 9,
+        "new_number": 10,
+        "content": "经营者不得实施下列侵犯商业秘密的行为：（一）以盗窃、贿赂、欺诈、胁迫、电子侵入或者其他不正当手段获取权利人的商业秘密；（二）披露、使用或者允许他人使用以前项手段获取的权利人的商业秘密；（三）违反保密义务或者违反权利人有关保守商业秘密的要求，披露、使用或者允许他人使用其所掌握的商业秘密；（四）教唆、引诱、帮助他人违反保密义务或者违反权利人有关保守商业秘密的要求，获取、披露、使用或者允许他人使用权利人的商业秘密。经营者以外的其他自然人、法人和非法人组织实施前款所列违法行为的，视为侵犯商业秘密。第三人明知或者应知商业秘密权利人的员工、前员工或者其他单位、个人实施本条第一款所列违法行为，仍获取、披露、使用或者允许他人使用该商业秘密的，视为侵犯商业秘密。本法所称的商业秘密，是指不为公众所知悉、具有商业价值并经权利人采取相应保密措施的技术信息、经营信息等商业信息。",
+        "similarity": 1.0,
+        "match_type": "auto"
+      },
+      {
+        "old_number": 13,
+        "new_number": 16,
+        "content": "监督检查部门调查涉嫌不正当竞争行为，可以采取下列措施：（一）进入涉嫌不正当竞争行为的经营场所进行检查；（二）询问被调查的经营者、利害关系人及其他有关单位、个人，要求其说明有关情况或者提供与被调查行为有关的其他资料；（三）查询、复制与涉嫌不正当竞争行为有关的协议、账簿、单据、文件、记录、业务函电和其他资料；（四）查封、扣押与涉嫌不正当竞争行为有关的财物；（五）查询涉嫌不正当竞争行为的经营者的银行账户。采取前款规定的措施，应当向监督检查部门主要负责人书面报告，并经批准。采取前款第四项、第五项规定的措施，应当向设区的市级以上人民政府监督检查部门主要负责人书面报告，并经批准。监督检查部门调查涉嫌不正当竞争行为，应当遵守《中华人民共和国行政强制法》和其他有关法律、行政法规的规定，并应当将查处结果及时向社会公开。",
+        "similarity": 0.9971910112359551,
+        "match_type": "auto"
+      },
+      {
+        "old_number": 14,
+        "new_number": 17,
+        "content": "监督检查部门调查涉嫌不正当竞争行为，被调查的经营者、利害关系人及其他有关单位、个人应当如实提供有关资料或者情况。",
+        "similarity": 1.0,
+        "match_type": "auto"
+      },
+      {
+        "old_number": 16,
+        "new_number": 20,
+        "content": "对涉嫌不正当竞争行为，任何单位和个人有权向监督检查部门举报，监督检查部门接到举报后应当依法及时处理。监督检查部门应当向社会公开受理举报的电话、信箱或者电子邮件地址，并为举报人保密。对实名举报并提供相关事实和证据的，监督检查部门应当将处理结果告知举报人。",
+        "similarity": 0.9921259842519685,
+        "match_type": "auto"
+      },
+      {
+        "old_number": 22,
+        "new_number": 27,
+        "content": "经营者违反本法第十条规定进行有奖销售的，由监督检查部门责令停止违法行为，处五万元以上五十万元以下的罚款。",
+        "similarity": 0.9904761904761905,
+        "match_type": "auto"
+      },
+      {
+        "old_number": 25,
+        "new_number": 32,
+        "content": "经营者违反本法规定从事不正当竞争，有主动消除或者减轻违法行为危害后果等法定情形的，依法从轻或者减轻行政处罚；违法行为轻微并及时纠正，没有造成危害后果的，不予行政处罚。",
+        "similarity": 1.0,
+        "match_type": "auto"
+      },
+      {
+        "old_number": 26,
+        "new_number": 33,
+        "content": "经营者违反本法规定从事不正当竞争，受到行政处罚的，由监督检查部门记入信用记录，并依照有关法律、行政法规的规定予以公示。",
+        "similarity": 1.0,
+        "match_type": "auto"
+      },
+      {
+        "old_number": 27,
+        "new_number": 34,
+        "content": "经营者违反本法规定，应当承担民事责任、行政责任和刑事责任，其财产不足以支付的，优先用于承担民事责任。",
+        "similarity": 1.0,
+        "match_type": "auto"
+      },
+      {
+        "old_number": 29,
+        "new_number": 36,
+        "content": "当事人对监督检查部门作出的决定不服的，可以依法申请行政复议或者提起行政诉讼。",
+        "similarity": 1.0,
+        "match_type": "auto"
+      },
+      {
+        "old_number": 32,
+        "new_number": 39,
+        "content": "在侵犯商业秘密的民事审判程序中，商业秘密权利人提供初步证据，证明其已经对所主张的商业秘密采取保密措施，且合理表明商业秘密被侵犯，涉嫌侵权人应当证明权利人所主张的商业秘密不属于本法规定的商业秘密。商业秘密权利人提供初步证据合理表明商业秘密被侵犯，且提供以下证据之一的，涉嫌侵权人应当证明其不存在侵犯商业秘密的行为：（一）有证据表明涉嫌侵权人有渠道或者机会获取商业秘密，且其使用的信息与该商业秘密实质上相同；（二）有证据表明商业秘密已经被涉嫌侵权人披露、使用或者有被披露、使用的风险；（三）有其他证据表明商业秘密被涉嫌侵权人侵犯。",
+        "similarity": 1.0,
+        "match_type": "auto"
+      }
+    ],
+    "modified": [
+      {
+        "old_number": 1,
+        "new_number": 1,
+        "old_content": "为了促进社会主义市场经济健康发展，鼓励和保护公平竞争，制止不正当竞争行为，保护经营者和消费者的合法权益，制定本法。",
+        "new_content": "为了促进社会主义市场经济健康发展，鼓励和保护公平竞争，预防和制止不正当竞争行为，保护经营者和消费者的合法权益，制定本法。",
+        "similarity": 0.9743589743589743,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 1,
+          "chapter_title": "总则",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 1,
+          "chapter_title": "总则",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "为了促进社会主义市场经济健康发展，鼓励和保护公平竞争，<span class=\"diff-added\">预</span><span class=\"diff-added\">防</span><span class=\"diff-added\">和</span>制止不正当竞争行为，保护经营者和消费者的合法权益，制定本法。"
+      },
+      {
+        "old_number": 2,
+        "new_number": 2,
+        "old_content": "经营者在生产经营活动中，应当遵循自愿、平等、公平、诚信的原则，遵守法律和商业道德。本法所称的不正当竞争行为，是指经营者在生产经营活动中，违反本法规定，扰乱市场竞争秩序，损害其他经营者或者消费者的合法权益的行为。本法所称的经营者，是指从事商品生产、经营或者提供服务（以下所称商品包括服务）的自然人、法人和非法人组织。",
+        "new_content": "经营者在生产经营活动中，应当遵循自愿、平等、公平、诚信的原则，遵守法律和商业道德，公平参与市场竞争。本法所称的不正当竞争行为，是指经营者在生产经营活动中，违反本法规定，扰乱市场竞争秩序，损害其他经营者或者消费者的合法权益的行为。本法所称的经营者，是指从事商品生产、经营或者提供服务（以下所称商品包括服务）的自然人、法人和非法人组织。",
+        "similarity": 0.9721362229102167,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 1,
+          "chapter_title": "总则",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 1,
+          "chapter_title": "总则",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者在生产经营活动中，应当遵循自愿、平等、公平、诚信的原则，遵守法律和商业道德<span class=\"diff-added\">，</span><span class=\"diff-added\">公</span><span class=\"diff-added\">平</span><span class=\"diff-added\">参</span><span class=\"diff-added\">与</span><span class=\"diff-added\">市</span><span class=\"diff-added\">场</span><span class=\"diff-added\">竞</span><span class=\"diff-added\">争</span>。本法所称的不正当竞争行为，是指经营者在生产经营活动中，违反本法规定，扰乱市场竞争秩序，损害其他经营者或者消费者的合法权益的行为。本法所称的经营者，是指从事商品生产、经营或者提供服务（以下所称商品包括服务）的自然人、法人和非法人组织。"
+      },
+      {
+        "old_number": 3,
+        "new_number": 4,
+        "old_content": "各级人民政府应当采取措施，制止不正当竞争行为，为公平竞争创造良好的环境和条件。国务院建立反不正当竞争工作协调机制，研究决定反不正当竞争重大政策，协调处理维护市场竞争秩序的重大问题。",
+        "new_content": "各级人民政府应当采取措施，预防和制止不正当竞争行为，为公平竞争创造良好的环境和条件。国务院建立健全反不正当竞争工作协调机制，协调处理维护市场竞争秩序的重大问题。",
+        "similarity": 0.8823529411764706,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 1,
+          "chapter_title": "总则",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 1,
+          "chapter_title": "总则",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "各级人民政府应当采取措施，<span class=\"diff-added\">预</span><span class=\"diff-added\">防</span><span class=\"diff-added\">和</span>制止不正当竞争行为，为公平竞争创造良好的环境和条件。国务院建立<span class=\"diff-added\">健</span><span class=\"diff-added\">全</span>反不正当竞争工作协调机制<span class=\"diff-deleted\">，</span><span class=\"diff-deleted\">研</span><span class=\"diff-deleted\">究</span><span class=\"diff-deleted\">决</span><span class=\"diff-deleted\">定</span><span class=\"diff-deleted\">反</span><span class=\"diff-deleted\">不</span><span class=\"diff-deleted\">正</span><span class=\"diff-deleted\">当</span><span class=\"diff-deleted\">竞</span><span class=\"diff-deleted\">争</span><span class=\"diff-deleted\">重</span><span class=\"diff-deleted\">大</span><span class=\"diff-deleted\">政</span><span class=\"diff-deleted\">策</span>，协调处理维护市场竞争秩序的重大问题。"
+      },
+      {
+        "old_number": 4,
+        "new_number": 5,
+        "old_content": "县级以上人民政府履行工商行政管理职责的部门对不正当竞争行为进行查处；法律、行政法规规定由其他部门查处的，依照其规定。",
+        "new_content": "县级以上人民政府履行市场监督管理职责的部门对不正当竞争行为进行监督检查；法律、行政法规规定由其他部门监督检查的，依照其规定。",
+        "similarity": 0.8666666666666667,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 1,
+          "chapter_title": "总则",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 1,
+          "chapter_title": "总则",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "县级以上人民政府履行<span class=\"diff-deleted\">工</span><span class=\"diff-deleted\">商</span><span class=\"diff-deleted\">行</span><span class=\"diff-deleted\">政</span><span class=\"diff-added\">市</span><span class=\"diff-added\">场</span><span class=\"diff-added\">监</span><span class=\"diff-added\">督</span>管理职责的部门对不正当竞争行为进行<span class=\"diff-added\">监</span><span class=\"diff-added\">督</span><span class=\"diff-added\">检</span>查<span class=\"diff-deleted\">处</span>；法律、行政法规规定由其他部门<span class=\"diff-added\">监</span><span class=\"diff-added\">督</span><span class=\"diff-added\">检</span>查<span class=\"diff-deleted\">处</span>的，依照其规定。"
+      },
+      {
+        "old_number": 5,
+        "new_number": 6,
+        "old_content": "国家鼓励、支持和保护一切组织和个人对不正当竞争行为进行社会监督。国家机关及其工作人员不得支持、包庇不正当竞争行为。行业组织应当加强行业自律，引导、规范会员依法竞争，维护市场竞争秩序。",
+        "new_content": "国家鼓励、支持和保护一切组织和个人对不正当竞争行为进行社会监督。国家机关及其工作人员不得支持、包庇不正当竞争行为。行业组织应当加强行业自律，引导、规范本行业的经营者依法竞争，维护市场竞争秩序。",
+        "similarity": 0.9518716577540107,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "国家鼓励、支持和保护一切组织和个人对不正当竞争行为进行社会监督。国家机关及其工作人员不得支持、包庇不正当竞争行为。行业组织应当加强行业自律，引导、规范<span class=\"diff-deleted\">会</span><span class=\"diff-deleted\">员</span><span class=\"diff-added\">本</span><span class=\"diff-added\">行</span><span class=\"diff-added\">业</span><span class=\"diff-added\">的</span><span class=\"diff-added\">经</span><span class=\"diff-added\">营</span><span class=\"diff-added\">者</span>依法竞争，维护市场竞争秩序。"
+      },
+      {
+        "old_number": 6,
+        "new_number": 7,
+        "old_content": "经营者不得实施下列混淆行为，引人误认为是他人商品或者与他人存在特定联系：（一）擅自使用与他人有一定影响的商品名称、包装、装潢等相同或者近似的标识；（二）擅自使用他人有一定影响的企业名称（包括简称、字号等）、社会组织名称（包括简称等）、姓名（包括笔名、艺名、译名等）；（三）擅自使用他人有一定影响的域名主体部分、网站名称、网页等；（四）其他足以引人误认为是他人商品或者与他人存在特定联系的混淆行为。",
+        "new_content": "经营者不得实施下列混淆行为，引人误认为是他人商品或者与他人存在特定联系：（一）擅自使用与他人有一定影响的商品名称、包装、装潢等相同或者近似的标识；（二）擅自使用他人有一定影响的名称（包括简称、字号等）、姓名（包括笔名、艺名、网名、译名等）；（三）擅自使用他人有一定影响的域名主体部分、网站名称、网页、新媒体账号名称、应用程序名称或者图标等；（四）其他足以引人误认为是他人商品或者与他人存在特定联系的混淆行为。擅自将他人注册商标、未注册的驰名商标作为企业名称中的字号使用，或者将他人商品名称、企业名称（包括简称、字号等）、注册商标、未注册的驰名商标等设置为搜索关键词，引人误认为是他人商品或者与他人存在特定联系的，属于前款规定的混淆行为。经营者不得帮助他人实施混淆行为。",
+        "similarity": 0.6842105263157895,
+        "match_type": "manual",
+        "old_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者不得实施下列混淆行为，引人误认为是他人商品或者与他人存在特定联系：（一）擅自使用与他人有一定影响的商品名称、包装、装潢等相同或者近似的标识；（二）擅自使用他人有一定影响的<span class=\"diff-deleted\">企</span><span class=\"diff-deleted\">业</span>名称（包括简称、字号等）、<span class=\"diff-deleted\">社</span><span class=\"diff-deleted\">会</span><span class=\"diff-deleted\">组</span><span class=\"diff-deleted\">织</span><span class=\"diff-deleted\">名</span><span class=\"diff-deleted\">称</span><span class=\"diff-deleted\">（</span><span class=\"diff-deleted\">包</span><span class=\"diff-deleted\">括</span><span class=\"diff-deleted\">简</span><span class=\"diff-deleted\">称</span><span class=\"diff-deleted\">等</span><span class=\"diff-deleted\">）</span><span class=\"diff-deleted\">、</span>姓名（包括笔名、艺<span class=\"diff-added\">名</span><span class=\"diff-added\">、</span><span class=\"diff-added\">网</span>名、译名等）；（三）擅自使用他人有一定影响的域名主体部分、网站名称、网页<span class=\"diff-added\">、</span><span class=\"diff-added\">新</span><span class=\"diff-added\">媒</span><span class=\"diff-added\">体</span><span class=\"diff-added\">账</span><span class=\"diff-added\">号</span><span class=\"diff-added\">名</span><span class=\"diff-added\">称</span><span class=\"diff-added\">、</span><span class=\"diff-added\">应</span><span class=\"diff-added\">用</span><span class=\"diff-added\">程</span><span class=\"diff-added\">序</span><span class=\"diff-added\">名</span><span class=\"diff-added\">称</span><span class=\"diff-added\">或</span><span class=\"diff-added\">者</span><span class=\"diff-added\">图</span><span class=\"diff-added\">标</span>等；（四）其他足以引人误认为是他人商品或者与他人存在特定联系的混淆行为。<span class=\"diff-added\">擅</span><span class=\"diff-added\">自</span><span class=\"diff-added\">将</span><span class=\"diff-added\">他</span><span class=\"diff-added\">人</span><span class=\"diff-added\">注</span><span class=\"diff-added\">册</span><span class=\"diff-added\">商</span><span class=\"diff-added\">标</span><span class=\"diff-added\">、</span><span class=\"diff-added\">未</span><span class=\"diff-added\">注</span><span class=\"diff-added\">册</span><span class=\"diff-added\">的</span><span class=\"diff-added\">驰</span><span class=\"diff-added\">名</span><span class=\"diff-added\">商</span><span class=\"diff-added\">标</span><span class=\"diff-added\">作</span><span class=\"diff-added\">为</span><span class=\"diff-added\">企</span><span class=\"diff-added\">业</span><span class=\"diff-added\">名</span><span class=\"diff-added\">称</span><span class=\"diff-added\">中</span><span class=\"diff-added\">的</span><span class=\"diff-added\">字</span><span class=\"diff-added\">号</span><span class=\"diff-added\">使</span><span class=\"diff-added\">用</span><span class=\"diff-added\">，</span><span class=\"diff-added\">或</span><span class=\"diff-added\">者</span><span class=\"diff-added\">将</span><span class=\"diff-added\">他</span><span class=\"diff-added\">人</span><span class=\"diff-added\">商</span><span class=\"diff-added\">品</span><span class=\"diff-added\">名</span><span class=\"diff-added\">称</span><span class=\"diff-added\">、</span><span class=\"diff-added\">企</span><span class=\"diff-added\">业</span><span class=\"diff-added\">名</span><span class=\"diff-added\">称</span><span class=\"diff-added\">（</span><span class=\"diff-added\">包</span><span class=\"diff-added\">括</span><span class=\"diff-added\">简</span><span class=\"diff-added\">称</span><span class=\"diff-added\">、</span><span class=\"diff-added\">字</span><span class=\"diff-added\">号</span><span class=\"diff-added\">等</span><span class=\"diff-added\">）</span><span class=\"diff-added\">、</span><span class=\"diff-added\">注</span><span class=\"diff-added\">册</span><span class=\"diff-added\">商</span><span class=\"diff-added\">标</span><span class=\"diff-added\">、</span><span class=\"diff-added\">未</span><span class=\"diff-added\">注</span><span class=\"diff-added\">册</span><span class=\"diff-added\">的</span><span class=\"diff-added\">驰</span><span class=\"diff-added\">名</span><span class=\"diff-added\">商</span><span class=\"diff-added\">标</span><span class=\"diff-added\">等</span><span class=\"diff-added\">设</span><span class=\"diff-added\">置</span><span class=\"diff-added\">为</span><span class=\"diff-added\">搜</span><span class=\"diff-added\">索</span><span class=\"diff-added\">关</span><span class=\"diff-added\">键</span><span class=\"diff-added\">词</span><span class=\"diff-added\">，</span><span class=\"diff-added\">引</span><span class=\"diff-added\">人</span><span class=\"diff-added\">误</span><span class=\"diff-added\">认</span><span class=\"diff-added\">为</span><span class=\"diff-added\">是</span><span class=\"diff-added\">他</span><span class=\"diff-added\">人</span><span class=\"diff-added\">商</span><span class=\"diff-added\">品</span><span class=\"diff-added\">或</span><span class=\"diff-added\">者</span><span class=\"diff-added\">与</span><span class=\"diff-added\">他</span><span class=\"diff-added\">人</span><span class=\"diff-added\">存</span><span class=\"diff-added\">在</span><span class=\"diff-added\">特</span><span class=\"diff-added\">定</span><span class=\"diff-added\">联</span><span class=\"diff-added\">系</span><span class=\"diff-added\">的</span><span class=\"diff-added\">，</span><span class=\"diff-added\">属</span><span class=\"diff-added\">于</span><span class=\"diff-added\">前</span><span class=\"diff-added\">款</span><span class=\"diff-added\">规</span><span class=\"diff-added\">定</span><span class=\"diff-added\">的</span><span class=\"diff-added\">混</span><span class=\"diff-added\">淆</span><span class=\"diff-added\">行</span><span class=\"diff-added\">为</span><span class=\"diff-added\">。</span><span class=\"diff-added\">经</span><span class=\"diff-added\">营</span><span class=\"diff-added\">者</span><span class=\"diff-added\">不</span><span class=\"diff-added\">得</span><span class=\"diff-added\">帮</span><span class=\"diff-added\">助</span><span class=\"diff-added\">他</span><span class=\"diff-added\">人</span><span class=\"diff-added\">实</span><span class=\"diff-added\">施</span><span class=\"diff-added\">混</span><span class=\"diff-added\">淆</span><span class=\"diff-added\">行</span><span class=\"diff-added\">为</span><span class=\"diff-added\">。</span>"
+      },
+      {
+        "old_number": 7,
+        "new_number": 8,
+        "old_content": "经营者不得采用财物或者其他手段贿赂下列单位或者个人，以谋取交易机会或者竞争优势：（一）交易相对方的工作人员；（二）受交易相对方委托办理相关事务的单位或者个人；（三）利用职权或者影响力影响交易的单位或者个人。经营者在交易活动中，可以以明示方式向交易相对方支付折扣，或者向中间人支付佣金。经营者向交易相对方支付折扣、向中间人支付佣金的，应当如实入账。接受折扣、佣金的经营者也应当如实入账。经营者的工作人员进行贿赂的，应当认定为经营者的行为；但是，经营者有证据证明该工作人员的行为与为经营者谋取交易机会或者竞争优势无关的除外。",
+        "new_content": "经营者不得采用给予财物或者其他手段贿赂下列单位或者个人，以谋取交易机会或者竞争优势：（一）交易相对方的工作人员；（二）受交易相对方委托办理相关事务的单位或者个人；（三）利用职权或者影响力影响交易的单位或者个人。前款规定的单位和个人不得收受贿赂。经营者在交易活动中，可以以明示方式向交易相对方支付折扣，或者向中间人支付佣金。经营者向交易相对方支付折扣、向中间人支付佣金的，应当如实入账。接受折扣、佣金的经营者也应当如实入账。经营者的工作人员进行贿赂的，应当认定为经营者的行为；但是，经营者有证据证明该工作人员的行为与为经营者谋取交易机会或者竞争优势无关的除外。",
+        "similarity": 0.9647495361781077,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者不得采用<span class=\"diff-added\">给</span><span class=\"diff-added\">予</span>财物或者其他手段贿赂下列单位或者个人，以谋取交易机会或者竞争优势：（一）交易相对方的工作人员；（二）受交易相对方委托办理相关事务的单位或者个人；（三）利用职权或者影响力影响交易的单位或者个人。<span class=\"diff-added\">前</span><span class=\"diff-added\">款</span><span class=\"diff-added\">规</span><span class=\"diff-added\">定</span><span class=\"diff-added\">的</span><span class=\"diff-added\">单</span><span class=\"diff-added\">位</span><span class=\"diff-added\">和</span><span class=\"diff-added\">个</span><span class=\"diff-added\">人</span><span class=\"diff-added\">不</span><span class=\"diff-added\">得</span><span class=\"diff-added\">收</span><span class=\"diff-added\">受</span><span class=\"diff-added\">贿</span><span class=\"diff-added\">赂</span><span class=\"diff-added\">。</span>经营者在交易活动中，可以以明示方式向交易相对方支付折扣，或者向中间人支付佣金。经营者向交易相对方支付折扣、向中间人支付佣金的，应当如实入账。接受折扣、佣金的经营者也应当如实入账。经营者的工作人员进行贿赂的，应当认定为经营者的行为；但是，经营者有证据证明该工作人员的行为与为经营者谋取交易机会或者竞争优势无关的除外。"
+      },
+      {
+        "old_number": 8,
+        "new_number": 9,
+        "old_content": "经营者不得对其商品的性能、功能、质量、销售状况、用户评价、曾获荣誉等作虚假或者引人误解的商业宣传，欺骗、误导消费者。经营者不得通过组织虚假交易等方式，帮助其他经营者进行虚假或者引人误解的商业宣传。",
+        "new_content": "经营者不得对其商品的性能、功能、质量、销售状况、用户评价、曾获荣誉等作虚假或者引人误解的商业宣传，欺骗、误导消费者和其他经营者。经营者不得通过组织虚假交易、虚假评价等方式，帮助其他经营者进行虚假或者引人误解的商业宣传。",
+        "similarity": 0.9468599033816425,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者不得对其商品的性能、功能、质量、销售状况、用户评价、曾获荣誉等作虚假或者引人误解的商业宣传，欺骗、误导消费者<span class=\"diff-added\">和</span><span class=\"diff-added\">其</span><span class=\"diff-added\">他</span><span class=\"diff-added\">经</span><span class=\"diff-added\">营</span><span class=\"diff-added\">者</span>。经营者不得通过组织虚假交易<span class=\"diff-added\">、</span><span class=\"diff-added\">虚</span><span class=\"diff-added\">假</span><span class=\"diff-added\">评</span><span class=\"diff-added\">价</span>等方式，帮助其他经营者进行虚假或者引人误解的商业宣传。"
+      },
+      {
+        "old_number": 10,
+        "new_number": 11,
+        "old_content": "经营者进行有奖销售不得存在下列情形：（一）所设奖的种类、兑奖条件、奖金金额或者奖品等有奖销售信息不明确，影响兑奖；（二）采用谎称有奖或者故意让内定人员中奖的欺骗方式进行有奖销售；（三）抽奖式的有奖销售，最高奖的金额超过五万元。",
+        "new_content": "经营者进行有奖销售不得存在下列情形：（一）所设奖的种类、兑奖条件、奖金金额或者奖品等有奖销售信息不明确，影响兑奖；（二）有奖销售活动开始后，无正当理由变更所设奖的种类、兑奖条件、奖金金额或者奖品等有奖销售信息；（三）采用谎称有奖或者故意让内定人员中奖等欺骗方式进行有奖销售；（四）抽奖式的有奖销售，最高奖的金额超过五万元。",
+        "similarity": 0.8102189781021898,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者进行有奖销售不得存在下列情形：（一）所设奖的种类、兑奖条件、奖金金额或者奖品等有奖销售信息不明确，影响兑奖；（二）<span class=\"diff-added\">有</span><span class=\"diff-added\">奖</span><span class=\"diff-added\">销</span><span class=\"diff-added\">售</span><span class=\"diff-added\">活</span><span class=\"diff-added\">动</span><span class=\"diff-added\">开</span><span class=\"diff-added\">始</span><span class=\"diff-added\">后</span><span class=\"diff-added\">，</span><span class=\"diff-added\">无</span><span class=\"diff-added\">正</span><span class=\"diff-added\">当</span><span class=\"diff-added\">理</span><span class=\"diff-added\">由</span><span class=\"diff-added\">变</span><span class=\"diff-added\">更</span><span class=\"diff-added\">所</span><span class=\"diff-added\">设</span><span class=\"diff-added\">奖</span><span class=\"diff-added\">的</span><span class=\"diff-added\">种</span><span class=\"diff-added\">类</span><span class=\"diff-added\">、</span><span class=\"diff-added\">兑</span><span class=\"diff-added\">奖</span><span class=\"diff-added\">条</span><span class=\"diff-added\">件</span><span class=\"diff-added\">、</span><span class=\"diff-added\">奖</span><span class=\"diff-added\">金</span><span class=\"diff-added\">金</span><span class=\"diff-added\">额</span><span class=\"diff-added\">或</span><span class=\"diff-added\">者</span><span class=\"diff-added\">奖</span><span class=\"diff-added\">品</span><span class=\"diff-added\">等</span><span class=\"diff-added\">有</span><span class=\"diff-added\">奖</span><span class=\"diff-added\">销</span><span class=\"diff-added\">售</span><span class=\"diff-added\">信</span><span class=\"diff-added\">息</span><span class=\"diff-added\">；</span><span class=\"diff-added\">（</span><span class=\"diff-added\">三</span><span class=\"diff-added\">）</span>采用谎称有奖或者故意让内定人员中奖<span class=\"diff-deleted\">的</span><span class=\"diff-added\">等</span>欺骗方式进行有奖销售；（<span class=\"diff-deleted\">三</span><span class=\"diff-added\">四</span>）抽奖式的有奖销售，最高奖的金额超过五万元。"
+      },
+      {
+        "old_number": 11,
+        "new_number": 12,
+        "old_content": "经营者不得编造、传播虚假信息或者误导性信息，损害竞争对手的商业信誉、商品声誉。",
+        "new_content": "经营者不得编造、传播或者指使他人编造、传播虚假信息或者误导性信息，损害其他经营者的商业信誉、商品声誉。",
+        "similarity": 0.7777777777777778,
+        "match_type": "manual",
+        "old_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者不得<span class=\"diff-added\">编</span><span class=\"diff-added\">造</span><span class=\"diff-added\">、</span><span class=\"diff-added\">传</span><span class=\"diff-added\">播</span><span class=\"diff-added\">或</span><span class=\"diff-added\">者</span><span class=\"diff-added\">指</span><span class=\"diff-added\">使</span><span class=\"diff-added\">他</span><span class=\"diff-added\">人</span>编造、传播虚假信息或者误导性信息，损害<span class=\"diff-deleted\">竞</span><span class=\"diff-deleted\">争</span><span class=\"diff-deleted\">对</span><span class=\"diff-deleted\">手</span><span class=\"diff-added\">其</span><span class=\"diff-added\">他</span><span class=\"diff-added\">经</span><span class=\"diff-added\">营</span><span class=\"diff-added\">者</span>的商业信誉、商品声誉。"
+      },
+      {
+        "old_number": 12,
+        "new_number": 13,
+        "old_content": "经营者利用网络从事生产经营活动，应当遵守本法的各项规定。经营者不得利用技术手段，通过影响用户选择或者其他方式，实施下列妨碍、破坏其他经营者合法提供的网络产品或者服务正常运行的行为：（一）未经其他经营者同意，在其合法提供的网络产品或者服务中，插入链接、强制进行目标跳转；（二）误导、欺骗、强迫用户修改、关闭、卸载其他经营者合法提供的网络产品或者服务；（三）恶意对其他经营者合法提供的网络产品或者服务实施不兼容；（四）其他妨碍、破坏其他经营者合法提供的网络产品或者服务正常运行的行为。",
+        "new_content": "经营者利用网络从事生产经营活动，应当遵守本法的各项规定。经营者不得利用数据和算法、技术、平台规则等，通过影响用户选择或者其他方式，实施下列妨碍、破坏其他经营者合法提供的网络产品或者服务正常运行的行为：（一）未经其他经营者同意，在其合法提供的网络产品或者服务中，插入链接、强制进行目标跳转；（二）误导、欺骗、强迫用户修改、关闭、卸载其他经营者合法提供的网络产品或者服务；（三）恶意对其他经营者合法提供的网络产品或者服务实施不兼容；（四）其他妨碍、破坏其他经营者合法提供的网络产品或者服务正常运行的行为。经营者不得以欺诈、胁迫、避开或者破坏技术管理措施等不正当方式，获取、使用其他经营者合法持有的数据，损害其他经营者的合法权益，扰乱市场竞争秩序。经营者不得滥用平台规则，直接或者指使他人对其他经营者实施虚假交易、虚假评价或者恶意退货等行为，损害其他经营者的合法权益，扰乱市场竞争秩序。",
+        "similarity": 0.7555555555555555,
+        "match_type": "manual",
+        "old_chapter_info": {
+          "chapter_num": 3,
+          "chapter_title": "对涉嫌不正当竞争行为的调查",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者利用网络从事生产经营活动，应当遵守本法的各项规定。经营者不得利用<span class=\"diff-added\">数</span><span class=\"diff-added\">据</span><span class=\"diff-added\">和</span><span class=\"diff-added\">算</span><span class=\"diff-added\">法</span><span class=\"diff-added\">、</span>技术<span class=\"diff-deleted\">手</span><span class=\"diff-deleted\">段</span><span class=\"diff-added\">、</span><span class=\"diff-added\">平</span><span class=\"diff-added\">台</span><span class=\"diff-added\">规</span><span class=\"diff-added\">则</span><span class=\"diff-added\">等</span>，通过影响用户选择或者其他方式，实施下列妨碍、破坏其他经营者合法提供的网络产品或者服务正常运行的行为：（一）未经其他经营者同意，在其合法提供的网络产品或者服务中，插入链接、强制进行目标跳转；（二）误导、欺骗、强迫用户修改、关闭、卸载其他经营者合法提供的网络产品或者服务；（三）恶意对其他经营者合法提供的网络产品或者服务实施不兼容；（四）其他妨碍、破坏其他经营者合法提供的网络产品或者服务正常运行的行为。<span class=\"diff-added\">经</span><span class=\"diff-added\">营</span><span class=\"diff-added\">者</span><span class=\"diff-added\">不</span><span class=\"diff-added\">得</span><span class=\"diff-added\">以</span><span class=\"diff-added\">欺</span><span class=\"diff-added\">诈</span><span class=\"diff-added\">、</span><span class=\"diff-added\">胁</span><span class=\"diff-added\">迫</span><span class=\"diff-added\">、</span><span class=\"diff-added\">避</span><span class=\"diff-added\">开</span><span class=\"diff-added\">或</span><span class=\"diff-added\">者</span><span class=\"diff-added\">破</span><span class=\"diff-added\">坏</span><span class=\"diff-added\">技</span><span class=\"diff-added\">术</span><span class=\"diff-added\">管</span><span class=\"diff-added\">理</span><span class=\"diff-added\">措</span><span class=\"diff-added\">施</span><span class=\"diff-added\">等</span><span class=\"diff-added\">不</span><span class=\"diff-added\">正</span><span class=\"diff-added\">当</span><span class=\"diff-added\">方</span><span class=\"diff-added\">式</span><span class=\"diff-added\">，</span><span class=\"diff-added\">获</span><span class=\"diff-added\">取</span><span class=\"diff-added\">、</span><span class=\"diff-added\">使</span><span class=\"diff-added\">用</span><span class=\"diff-added\">其</span><span class=\"diff-added\">他</span><span class=\"diff-added\">经</span><span class=\"diff-added\">营</span><span class=\"diff-added\">者</span><span class=\"diff-added\">合</span><span class=\"diff-added\">法</span><span class=\"diff-added\">持</span><span class=\"diff-added\">有</span><span class=\"diff-added\">的</span><span class=\"diff-added\">数</span><span class=\"diff-added\">据</span><span class=\"diff-added\">，</span><span class=\"diff-added\">损</span><span class=\"diff-added\">害</span><span class=\"diff-added\">其</span><span class=\"diff-added\">他</span><span class=\"diff-added\">经</span><span class=\"diff-added\">营</span><span class=\"diff-added\">者</span><span class=\"diff-added\">的</span><span class=\"diff-added\">合</span><span class=\"diff-added\">法</span><span class=\"diff-added\">权</span><span class=\"diff-added\">益</span><span class=\"diff-added\">，</span><span class=\"diff-added\">扰</span><span class=\"diff-added\">乱</span><span class=\"diff-added\">市</span><span class=\"diff-added\">场</span><span class=\"diff-added\">竞</span><span class=\"diff-added\">争</span><span class=\"diff-added\">秩</span><span class=\"diff-added\">序</span><span class=\"diff-added\">。</span><span class=\"diff-added\">经</span><span class=\"diff-added\">营</span><span class=\"diff-added\">者</span><span class=\"diff-added\">不</span><span class=\"diff-added\">得</span><span class=\"diff-added\">滥</span><span class=\"diff-added\">用</span><span class=\"diff-added\">平</span><span class=\"diff-added\">台</span><span class=\"diff-added\">规</span><span class=\"diff-added\">则</span><span class=\"diff-added\">，</span><span class=\"diff-added\">直</span><span class=\"diff-added\">接</span><span class=\"diff-added\">或</span><span class=\"diff-added\">者</span><span class=\"diff-added\">指</span><span class=\"diff-added\">使</span><span class=\"diff-added\">他</span><span class=\"diff-added\">人</span><span class=\"diff-added\">对</span><span class=\"diff-added\">其</span><span class=\"diff-added\">他</span><span class=\"diff-added\">经</span><span class=\"diff-added\">营</span><span class=\"diff-added\">者</span><span class=\"diff-added\">实</span><span class=\"diff-added\">施</span><span class=\"diff-added\">虚</span><span class=\"diff-added\">假</span><span class=\"diff-added\">交</span><span class=\"diff-added\">易</span><span class=\"diff-added\">、</span><span class=\"diff-added\">虚</span><span class=\"diff-added\">假</span><span class=\"diff-added\">评</span><span class=\"diff-added\">价</span><span class=\"diff-added\">或</span><span class=\"diff-added\">者</span><span class=\"diff-added\">恶</span><span class=\"diff-added\">意</span><span class=\"diff-added\">退</span><span class=\"diff-added\">货</span><span class=\"diff-added\">等</span><span class=\"diff-added\">行</span><span class=\"diff-added\">为</span><span class=\"diff-added\">，</span><span class=\"diff-added\">损</span><span class=\"diff-added\">害</span><span class=\"diff-added\">其</span><span class=\"diff-added\">他</span><span class=\"diff-added\">经</span><span class=\"diff-added\">营</span><span class=\"diff-added\">者</span><span class=\"diff-added\">的</span><span class=\"diff-added\">合</span><span class=\"diff-added\">法</span><span class=\"diff-added\">权</span><span class=\"diff-added\">益</span><span class=\"diff-added\">，</span><span class=\"diff-added\">扰</span><span class=\"diff-added\">乱</span><span class=\"diff-added\">市</span><span class=\"diff-added\">场</span><span class=\"diff-added\">竞</span><span class=\"diff-added\">争</span><span class=\"diff-added\">秩</span><span class=\"diff-added\">序</span><span class=\"diff-added\">。</span>"
+      },
+      {
+        "old_number": 15,
+        "new_number": 19,
+        "old_content": "监督检查部门及其工作人员对调查过程中知悉的商业秘密负有保密义务。",
+        "new_content": "监督检查部门及其工作人员对调查过程中知悉的商业秘密、个人隐私和个人信息依法负有保密义务。",
+        "similarity": 0.8421052631578947,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 3,
+          "chapter_title": "对涉嫌不正当竞争行为的调查",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 3,
+          "chapter_title": "对涉嫌不正当竞争行为的调查",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "监督检查部门及其工作人员对调查过程中知悉的商业秘密<span class=\"diff-added\">、</span><span class=\"diff-added\">个</span><span class=\"diff-added\">人</span><span class=\"diff-added\">隐</span><span class=\"diff-added\">私</span><span class=\"diff-added\">和</span><span class=\"diff-added\">个</span><span class=\"diff-added\">人</span><span class=\"diff-added\">信</span><span class=\"diff-added\">息</span><span class=\"diff-added\">依</span><span class=\"diff-added\">法</span>负有保密义务。"
+      },
+      {
+        "old_number": 17,
+        "new_number": 22,
+        "old_content": "经营者违反本法规定，给他人造成损害的，应当依法承担民事责任。经营者的合法权益受到不正当竞争行为损害的，可以向人民法院提起诉讼。因不正当竞争行为受到损害的经营者的赔偿数额，按照其因被侵权所受到的实际损失确定；实际损失难以计算的，按照侵权人因侵权所获得的利益确定。经营者恶意实施侵犯商业秘密行为，情节严重的，可以在按照上述方法确定数额的一倍以上五倍以下确定赔偿数额。赔偿数额还应当包括经营者为制止侵权行为所支付的合理开支。经营者违反本法第六条、第九条规定，权利人因被侵权所受到的实际损失、侵权人因侵权所获得的利益难以确定的，由人民法院根据侵权行为的情节判决给予权利人五百万元以下的赔偿。",
+        "new_content": "经营者违反本法规定，给他人造成损害的，应当依法承担民事责任。经营者的合法权益受到不正当竞争行为损害的，可以向人民法院提起诉讼。因不正当竞争行为受到损害的经营者的赔偿数额，按照其因被侵权所受到的实际损失或者侵权人因侵权所获得的利益确定。经营者故意实施侵犯商业秘密行为，情节严重的，可以在按照上述方法确定数额的一倍以上五倍以下确定赔偿数额。赔偿数额还应当包括经营者为制止侵权行为所支付的合理开支。经营者违反本法第七条、第十条规定，权利人因被侵权所受到的实际损失、侵权人因侵权所获得的利益难以确定的，由人民法院根据侵权行为的情节判决给予权利人五百万元以下的赔偿。",
+        "similarity": 0.9595782073813708,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者违反本法规定，给他人造成损害的，应当依法承担民事责任。经营者的合法权益受到不正当竞争行为损害的，可以向人民法院提起诉讼。因不正当竞争行为受到损害的经营者的赔偿数额，按照其因被侵权所受到的实际损失<span class=\"diff-added\">或</span><span class=\"diff-added\">者</span><span class=\"diff-deleted\">确</span><span class=\"diff-deleted\">定</span><span class=\"diff-deleted\">；</span><span class=\"diff-deleted\">实</span><span class=\"diff-deleted\">际</span><span class=\"diff-deleted\">损</span><span class=\"diff-deleted\">失</span><span class=\"diff-deleted\">难</span><span class=\"diff-deleted\">以</span><span class=\"diff-deleted\">计</span><span class=\"diff-deleted\">算</span><span class=\"diff-deleted\">的</span><span class=\"diff-deleted\">，</span><span class=\"diff-deleted\">按</span><span class=\"diff-deleted\">照</span>侵权人因侵权所获得的利益确定。经营者<span class=\"diff-deleted\">恶</span><span class=\"diff-added\">故</span>意实施侵犯商业秘密行为，情节严重的，可以在按照上述方法确定数额的一倍以上五倍以下确定赔偿数额。赔偿数额还应当包括经营者为制止侵权行为所支付的合理开支。经营者违反本法第<span class=\"diff-deleted\">六</span><span class=\"diff-added\">七</span>条、第<span class=\"diff-deleted\">九</span><span class=\"diff-added\">十</span>条规定，权利人因被侵权所受到的实际损失、侵权人因侵权所获得的利益难以确定的，由人民法院根据侵权行为的情节判决给予权利人五百万元以下的赔偿。"
+      },
+      {
+        "old_number": 18,
+        "new_number": 23,
+        "old_content": "经营者违反本法第六条规定实施混淆行为的，由监督检查部门责令停止违法行为，没收违法商品。违法经营额五万元以上的，可以并处违法经营额五倍以下的罚款；没有违法经营额或者违法经营额不足五万元的，可以并处二十五万元以下的罚款。情节严重的，吊销营业执照。经营者登记的企业名称违反本法第六条规定的，应当及时办理名称变更登记；名称变更前，由原企业登记机关以统一社会信用代码代替其名称。",
+        "new_content": "经营者违反本法第七条规定实施混淆行为或者帮助他人实施混淆行为的，由监督检查部门责令停止违法行为，没收违法商品。违法经营额五万元以上的，可以并处违法经营额五倍以下的罚款；没有违法经营额或者违法经营额不足五万元的，可以并处二十五万元以下的罚款；情节严重的，并处吊销营业执照。销售本法第七条规定的违法商品的，依照前款规定予以处罚；销售者不知道其销售的商品属于违法商品，能证明该商品是自己合法取得并说明提供者的，由监督检查部门责令停止销售，不予行政处罚。经营者登记的名称违反本法第七条规定的，应当及时办理名称变更登记；名称变更前，由登记机关以统一社会信用代码代替其名称。",
+        "similarity": 0.7569892473118279,
+        "match_type": "manual",
+        "old_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者违反本法第<span class=\"diff-deleted\">六</span><span class=\"diff-added\">七</span>条规定<span class=\"diff-added\">实</span><span class=\"diff-added\">施</span><span class=\"diff-added\">混</span><span class=\"diff-added\">淆</span><span class=\"diff-added\">行</span><span class=\"diff-added\">为</span><span class=\"diff-added\">或</span><span class=\"diff-added\">者</span><span class=\"diff-added\">帮</span><span class=\"diff-added\">助</span><span class=\"diff-added\">他</span><span class=\"diff-added\">人</span>实施混淆行为的，由监督检查部门责令停止违法行为，没收违法商品。违法经营额五万元以上的，可以并处违法经营额五倍以下的罚款；没有违法经营额或者违法经营额不足五万元的，可以并处二十五万元以下的罚款<span class=\"diff-deleted\">。</span><span class=\"diff-added\">；</span>情节严重的，<span class=\"diff-added\">并</span><span class=\"diff-added\">处</span>吊销营业执照。<span class=\"diff-added\">销</span><span class=\"diff-added\">售</span><span class=\"diff-added\">本</span><span class=\"diff-added\">法</span><span class=\"diff-added\">第</span><span class=\"diff-added\">七</span><span class=\"diff-added\">条</span><span class=\"diff-added\">规</span><span class=\"diff-added\">定</span><span class=\"diff-added\">的</span><span class=\"diff-added\">违</span><span class=\"diff-added\">法</span><span class=\"diff-added\">商</span><span class=\"diff-added\">品</span><span class=\"diff-added\">的</span><span class=\"diff-added\">，</span><span class=\"diff-added\">依</span><span class=\"diff-added\">照</span><span class=\"diff-added\">前</span><span class=\"diff-added\">款</span><span class=\"diff-added\">规</span><span class=\"diff-added\">定</span><span class=\"diff-added\">予</span><span class=\"diff-added\">以</span><span class=\"diff-added\">处</span><span class=\"diff-added\">罚</span><span class=\"diff-added\">；</span><span class=\"diff-added\">销</span><span class=\"diff-added\">售</span><span class=\"diff-added\">者</span><span class=\"diff-added\">不</span><span class=\"diff-added\">知</span><span class=\"diff-added\">道</span><span class=\"diff-added\">其</span><span class=\"diff-added\">销</span><span class=\"diff-added\">售</span><span class=\"diff-added\">的</span><span class=\"diff-added\">商</span><span class=\"diff-added\">品</span><span class=\"diff-added\">属</span><span class=\"diff-added\">于</span><span class=\"diff-added\">违</span><span class=\"diff-added\">法</span><span class=\"diff-added\">商</span><span class=\"diff-added\">品</span><span class=\"diff-added\">，</span><span class=\"diff-added\">能</span><span class=\"diff-added\">证</span><span class=\"diff-added\">明</span><span class=\"diff-added\">该</span><span class=\"diff-added\">商</span><span class=\"diff-added\">品</span><span class=\"diff-added\">是</span><span class=\"diff-added\">自</span><span class=\"diff-added\">己</span><span class=\"diff-added\">合</span><span class=\"diff-added\">法</span><span class=\"diff-added\">取</span><span class=\"diff-added\">得</span><span class=\"diff-added\">并</span><span class=\"diff-added\">说</span><span class=\"diff-added\">明</span><span class=\"diff-added\">提</span><span class=\"diff-added\">供</span><span class=\"diff-added\">者</span><span class=\"diff-added\">的</span><span class=\"diff-added\">，</span><span class=\"diff-added\">由</span><span class=\"diff-added\">监</span><span class=\"diff-added\">督</span><span class=\"diff-added\">检</span><span class=\"diff-added\">查</span><span class=\"diff-added\">部</span><span class=\"diff-added\">门</span><span class=\"diff-added\">责</span><span class=\"diff-added\">令</span><span class=\"diff-added\">停</span><span class=\"diff-added\">止</span><span class=\"diff-added\">销</span><span class=\"diff-added\">售</span><span class=\"diff-added\">，</span><span class=\"diff-added\">不</span><span class=\"diff-added\">予</span><span class=\"diff-added\">行</span><span class=\"diff-added\">政</span><span class=\"diff-added\">处</span><span class=\"diff-added\">罚</span><span class=\"diff-added\">。</span>经营者登记的<span class=\"diff-deleted\">企</span><span class=\"diff-deleted\">业</span>名称违反本法第<span class=\"diff-deleted\">六</span><span class=\"diff-added\">七</span>条规定的，应当及时办理名称变更登记；名称变更前，由<span class=\"diff-deleted\">原</span><span class=\"diff-deleted\">企</span><span class=\"diff-deleted\">业</span>登记机关以统一社会信用代码代替其名称。"
+      },
+      {
+        "old_number": 19,
+        "new_number": 24,
+        "old_content": "经营者违反本法第七条规定贿赂他人的，由监督检查部门没收违法所得，处十万元以上三百万元以下的罚款。情节严重的，吊销营业执照。",
+        "new_content": "有关单位违反本法第八条规定贿赂他人或者收受贿赂的，由监督检查部门没收违法所得，处十万元以上一百万元以下的罚款；情节严重的，处一百万元以上五百万元以下的罚款，可以并处吊销营业执照。经营者的法定代表人、主要负责人和直接责任人员对实施贿赂负有个人责任，以及有关个人收受贿赂的，由监督检查部门没收违法所得，处一百万元以下的罚款。",
+        "similarity": 0.3891402714932127,
+        "match_type": "manual",
+        "old_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "<span class=\"diff-deleted\">经</span><span class=\"diff-deleted\">营</span><span class=\"diff-deleted\">者</span><span class=\"diff-added\">有</span><span class=\"diff-added\">关</span><span class=\"diff-added\">单</span><span class=\"diff-added\">位</span>违反本法第<span class=\"diff-deleted\">七</span><span class=\"diff-added\">八</span>条规定贿赂他人<span class=\"diff-added\">或</span><span class=\"diff-added\">者</span><span class=\"diff-added\">收</span><span class=\"diff-added\">受</span><span class=\"diff-added\">贿</span><span class=\"diff-added\">赂</span>的，由监督检查部门没收违法所得，处十万元以上<span class=\"diff-deleted\">三</span><span class=\"diff-added\">一</span><span class=\"diff-added\">百</span><span class=\"diff-added\">万</span><span class=\"diff-added\">元</span><span class=\"diff-added\">以</span><span class=\"diff-added\">下</span><span class=\"diff-added\">的</span><span class=\"diff-added\">罚</span><span class=\"diff-added\">款</span><span class=\"diff-added\">；</span><span class=\"diff-added\">情</span><span class=\"diff-added\">节</span><span class=\"diff-added\">严</span><span class=\"diff-added\">重</span><span class=\"diff-added\">的</span><span class=\"diff-added\">，</span><span class=\"diff-added\">处</span><span class=\"diff-added\">一</span><span class=\"diff-added\">百</span><span class=\"diff-added\">万</span><span class=\"diff-added\">元</span><span class=\"diff-added\">以</span><span class=\"diff-added\">上</span><span class=\"diff-added\">五</span><span class=\"diff-added\">百</span><span class=\"diff-added\">万</span><span class=\"diff-added\">元</span><span class=\"diff-added\">以</span><span class=\"diff-added\">下</span><span class=\"diff-added\">的</span><span class=\"diff-added\">罚</span><span class=\"diff-added\">款</span><span class=\"diff-added\">，</span><span class=\"diff-added\">可</span><span class=\"diff-added\">以</span><span class=\"diff-added\">并</span><span class=\"diff-added\">处</span><span class=\"diff-added\">吊</span><span class=\"diff-added\">销</span><span class=\"diff-added\">营</span><span class=\"diff-added\">业</span><span class=\"diff-added\">执</span><span class=\"diff-added\">照</span><span class=\"diff-added\">。</span><span class=\"diff-added\">经</span><span class=\"diff-added\">营</span><span class=\"diff-added\">者</span><span class=\"diff-added\">的</span><span class=\"diff-added\">法</span><span class=\"diff-added\">定</span><span class=\"diff-added\">代</span><span class=\"diff-added\">表</span><span class=\"diff-added\">人</span><span class=\"diff-added\">、</span><span class=\"diff-added\">主</span><span class=\"diff-added\">要</span><span class=\"diff-added\">负</span><span class=\"diff-added\">责</span><span class=\"diff-added\">人</span><span class=\"diff-added\">和</span><span class=\"diff-added\">直</span><span class=\"diff-added\">接</span><span class=\"diff-added\">责</span><span class=\"diff-added\">任</span><span class=\"diff-added\">人</span><span class=\"diff-added\">员</span><span class=\"diff-added\">对</span><span class=\"diff-added\">实</span><span class=\"diff-added\">施</span><span class=\"diff-added\">贿</span><span class=\"diff-added\">赂</span><span class=\"diff-added\">负</span><span class=\"diff-added\">有</span><span class=\"diff-added\">个</span><span class=\"diff-added\">人</span><span class=\"diff-added\">责</span><span class=\"diff-added\">任</span><span class=\"diff-added\">，</span><span class=\"diff-added\">以</span><span class=\"diff-added\">及</span><span class=\"diff-added\">有</span><span class=\"diff-added\">关</span><span class=\"diff-added\">个</span><span class=\"diff-added\">人</span><span class=\"diff-added\">收</span><span class=\"diff-added\">受</span><span class=\"diff-added\">贿</span><span class=\"diff-added\">赂</span><span class=\"diff-added\">的</span><span class=\"diff-added\">，</span><span class=\"diff-added\">由</span><span class=\"diff-added\">监</span><span class=\"diff-added\">督</span><span class=\"diff-added\">检</span><span class=\"diff-added\">查</span><span class=\"diff-added\">部</span><span class=\"diff-added\">门</span><span class=\"diff-added\">没</span><span class=\"diff-added\">收</span><span class=\"diff-added\">违</span><span class=\"diff-added\">法</span><span class=\"diff-added\">所</span><span class=\"diff-added\">得</span><span class=\"diff-added\">，</span><span class=\"diff-added\">处</span><span class=\"diff-added\">一</span>百万元以下的罚款。<span class=\"diff-deleted\">情</span><span class=\"diff-deleted\">节</span><span class=\"diff-deleted\">严</span><span class=\"diff-deleted\">重</span><span class=\"diff-deleted\">的</span><span class=\"diff-deleted\">，</span><span class=\"diff-deleted\">吊</span><span class=\"diff-deleted\">销</span><span class=\"diff-deleted\">营</span><span class=\"diff-deleted\">业</span><span class=\"diff-deleted\">执</span><span class=\"diff-deleted\">照</span><span class=\"diff-deleted\">。</span>"
+      },
+      {
+        "old_number": 20,
+        "new_number": 25,
+        "old_content": "经营者违反本法第八条规定对其商品作虚假或者引人误解的商业宣传，或者通过组织虚假交易等方式帮助其他经营者进行虚假或者引人误解的商业宣传的，由监督检查部门责令停止违法行为，处二十万元以上一百万元以下的罚款；情节严重的，处一百万元以上二百万元以下的罚款，可以吊销营业执照。经营者违反本法第八条规定，属于发布虚假广告的，依照《中华人民共和国广告法》的规定处罚。",
+        "new_content": "经营者违反本法第九条规定对其商品作虚假或者引人误解的商业宣传，或者通过组织虚假交易、虚假评价等方式帮助其他经营者进行虚假或者引人误解的商业宣传的，由监督检查部门责令停止违法行为，处一百万元以下的罚款；情节严重的，处一百万元以上二百万元以下的罚款，可以并处吊销营业执照。经营者违反本法第九条规定，属于发布虚假广告的，依照《中华人民共和国广告法》的规定处罚。",
+        "similarity": 0.9518413597733711,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者违反本法第<span class=\"diff-deleted\">八</span><span class=\"diff-added\">九</span>条规定对其商品作虚假或者引人误解的商业宣传，或者通过组织虚假交易<span class=\"diff-added\">、</span><span class=\"diff-added\">虚</span><span class=\"diff-added\">假</span><span class=\"diff-added\">评</span><span class=\"diff-added\">价</span>等方式帮助其他经营者进行虚假或者引人误解的商业宣传的，由监督检查部门责令停止违法行为，处<span class=\"diff-deleted\">二</span><span class=\"diff-deleted\">十</span><span class=\"diff-deleted\">万</span><span class=\"diff-deleted\">元</span><span class=\"diff-deleted\">以</span><span class=\"diff-deleted\">上</span>一百万元以下的罚款；情节严重的，处一百万元以上二百万元以下的罚款，可以<span class=\"diff-added\">并</span><span class=\"diff-added\">处</span>吊销营业执照。经营者违反本法第<span class=\"diff-deleted\">八</span><span class=\"diff-added\">九</span>条规定，属于发布虚假广告的，依照《中华人民共和国广告法》的规定处罚。"
+      },
+      {
+        "old_number": 21,
+        "new_number": 26,
+        "old_content": "经营者以及其他自然人、法人和非法人组织违反本法第九条规定侵犯商业秘密的，由监督检查部门责令停止违法行为，没收违法所得，处十万元以上一百万元以下的罚款；情节严重的，处五十万元以上五百万元以下的罚款。",
+        "new_content": "经营者以及其他自然人、法人和非法人组织违反本法第十条规定侵犯商业秘密的，由监督检查部门责令停止违法行为，没收违法所得，处十万元以上一百万元以下的罚款；情节严重的，处一百万元以上五百万元以下的罚款。",
+        "similarity": 0.9693877551020408,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者以及其他自然人、法人和非法人组织违反本法第<span class=\"diff-deleted\">九</span><span class=\"diff-added\">十</span>条规定侵犯商业秘密的，由监督检查部门责令停止违法行为，没收违法所得，处十万元以上一百万元以下的罚款；情节严重的，处<span class=\"diff-deleted\">五</span><span class=\"diff-deleted\">十</span><span class=\"diff-added\">一</span><span class=\"diff-added\">百</span>万元以上五百万元以下的罚款。"
+      },
+      {
+        "old_number": 23,
+        "new_number": 28,
+        "old_content": "经营者违反本法第十一条规定损害竞争对手商业信誉、商品声誉的，由监督检查部门责令停止违法行为、消除影响，处十万元以上五十万元以下的罚款；情节严重的，处五十万元以上三百万元以下的罚款。",
+        "new_content": "经营者违反本法第十二条规定损害其他经营者商业信誉、商品声誉的，由监督检查部门责令停止违法行为、消除影响，处十万元以上一百万元以下的罚款；情节严重的，处一百万元以上五百万元以下的罚款。",
+        "similarity": 0.8839779005524862,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者违反本法第十<span class=\"diff-deleted\">一</span><span class=\"diff-added\">二</span>条规定损害<span class=\"diff-deleted\">竞</span><span class=\"diff-deleted\">争</span><span class=\"diff-deleted\">对</span><span class=\"diff-deleted\">手</span><span class=\"diff-added\">其</span><span class=\"diff-added\">他</span><span class=\"diff-added\">经</span><span class=\"diff-added\">营</span><span class=\"diff-added\">者</span>商业信誉、商品声誉的，由监督检查部门责令停止违法行为、消除影响，处十万元以上<span class=\"diff-deleted\">五</span><span class=\"diff-deleted\">十</span><span class=\"diff-added\">一</span><span class=\"diff-added\">百</span>万元以下的罚款；情节严重的，处<span class=\"diff-deleted\">五</span><span class=\"diff-deleted\">十</span><span class=\"diff-added\">一</span><span class=\"diff-added\">百</span>万元以上<span class=\"diff-deleted\">三</span><span class=\"diff-added\">五</span>百万元以下的罚款。"
+      },
+      {
+        "old_number": 24,
+        "new_number": 29,
+        "old_content": "经营者违反本法第十二条规定妨碍、破坏其他经营者合法提供的网络产品或者服务正常运行的，由监督检查部门责令停止违法行为，处十万元以上五十万元以下的罚款；情节严重的，处五十万元以上三百万元以下的罚款。",
+        "new_content": "经营者违反本法第十三条第二款、第三款、第四款规定利用网络从事不正当竞争的，由监督检查部门责令停止违法行为，处十万元以上一百万元以下的罚款；情节严重的，处一百万元以上五百万元以下的罚款。",
+        "similarity": 0.708994708994709,
+        "match_type": "manual",
+        "old_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "经营者违反本法第十<span class=\"diff-added\">三</span><span class=\"diff-added\">条</span><span class=\"diff-added\">第</span>二<span class=\"diff-deleted\">条</span><span class=\"diff-added\">款</span><span class=\"diff-added\">、</span><span class=\"diff-added\">第</span><span class=\"diff-added\">三</span><span class=\"diff-added\">款</span><span class=\"diff-added\">、</span><span class=\"diff-added\">第</span><span class=\"diff-added\">四</span><span class=\"diff-added\">款</span>规定<span class=\"diff-added\">利</span><span class=\"diff-added\">用</span><span class=\"diff-deleted\">妨</span><span class=\"diff-deleted\">碍</span><span class=\"diff-deleted\">、</span><span class=\"diff-deleted\">破</span><span class=\"diff-deleted\">坏</span><span class=\"diff-deleted\">其</span><span class=\"diff-deleted\">他</span><span class=\"diff-deleted\">经</span><span class=\"diff-deleted\">营</span><span class=\"diff-deleted\">者</span><span class=\"diff-deleted\">合</span><span class=\"diff-deleted\">法</span><span class=\"diff-deleted\">提</span><span class=\"diff-deleted\">供</span><span class=\"diff-deleted\">的</span>网络<span class=\"diff-added\">从</span><span class=\"diff-added\">事</span><span class=\"diff-added\">不</span><span class=\"diff-deleted\">产</span><span class=\"diff-deleted\">品</span><span class=\"diff-deleted\">或</span><span class=\"diff-deleted\">者</span><span class=\"diff-deleted\">服</span><span class=\"diff-deleted\">务</span>正<span class=\"diff-deleted\">常</span><span class=\"diff-deleted\">运</span><span class=\"diff-deleted\">行</span><span class=\"diff-added\">当</span><span class=\"diff-added\">竞</span><span class=\"diff-added\">争</span>的，由监督检查部门责令停止违法行为，处十万元以上<span class=\"diff-deleted\">五</span><span class=\"diff-deleted\">十</span><span class=\"diff-added\">一</span><span class=\"diff-added\">百</span>万元以下的罚款；情节严重的，处<span class=\"diff-deleted\">五</span><span class=\"diff-deleted\">十</span><span class=\"diff-added\">一</span><span class=\"diff-added\">百</span>万元以上<span class=\"diff-deleted\">三</span><span class=\"diff-added\">五</span>百万元以下的罚款。"
+      },
+      {
+        "old_number": 28,
+        "new_number": 35,
+        "old_content": "妨害监督检查部门依照本法履行职责，拒绝、阻碍调查的，由监督检查部门责令改正，对个人可以处五千元以下的罚款，对单位可以处五万元以下的罚款，并可以由公安机关依法给予治安管理处罚。",
+        "new_content": "妨害监督检查部门依照本法履行职责，拒绝、阻碍调查的，由监督检查部门责令改正，对个人可以处一万元以下的罚款，对单位可以处十万元以下的罚款。",
+        "similarity": 0.8387096774193549,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "妨害监督检查部门依照本法履行职责，拒绝、阻碍调查的，由监督检查部门责令改正，对个人可以处<span class=\"diff-deleted\">五</span><span class=\"diff-deleted\">千</span><span class=\"diff-added\">一</span><span class=\"diff-added\">万</span>元以下的罚款，对单位可以处<span class=\"diff-deleted\">五</span><span class=\"diff-added\">十</span>万元以下的罚款<span class=\"diff-deleted\">，</span><span class=\"diff-deleted\">并</span><span class=\"diff-deleted\">可</span><span class=\"diff-deleted\">以</span><span class=\"diff-deleted\">由</span><span class=\"diff-deleted\">公</span><span class=\"diff-deleted\">安</span><span class=\"diff-deleted\">机</span><span class=\"diff-deleted\">关</span><span class=\"diff-deleted\">依</span><span class=\"diff-deleted\">法</span><span class=\"diff-deleted\">给</span><span class=\"diff-deleted\">予</span><span class=\"diff-deleted\">治</span><span class=\"diff-deleted\">安</span><span class=\"diff-deleted\">管</span><span class=\"diff-deleted\">理</span><span class=\"diff-deleted\">处</span><span class=\"diff-deleted\">罚</span>。"
+      },
+      {
+        "old_number": 30,
+        "new_number": 37,
+        "old_content": "监督检查部门的工作人员滥用职权、玩忽职守、徇私舞弊或者泄露调查过程中知悉的商业秘密的，依法给予处分。",
+        "new_content": "监督检查部门的工作人员滥用职权、玩忽职守、徇私舞弊或者泄露调查过程中知悉的商业秘密、个人隐私或者个人信息的，依法给予处分。",
+        "similarity": 0.9009009009009009,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "监督检查部门的工作人员滥用职权、玩忽职守、徇私舞弊或者泄露调查过程中知悉的商业秘密<span class=\"diff-added\">、</span><span class=\"diff-added\">个</span><span class=\"diff-added\">人</span><span class=\"diff-added\">隐</span><span class=\"diff-added\">私</span><span class=\"diff-added\">或</span><span class=\"diff-added\">者</span><span class=\"diff-added\">个</span><span class=\"diff-added\">人</span><span class=\"diff-added\">信</span><span class=\"diff-added\">息</span>的，依法给予处分。"
+      },
+      {
+        "old_number": 31,
+        "new_number": 38,
+        "old_content": "违反本法规定，构成犯罪的，依法追究刑事责任。",
+        "new_content": "违反本法规定，构成违反治安管理行为的，依法给予治安管理处罚；构成犯罪的，依法追究刑事责任。",
+        "similarity": 0.6567164179104478,
+        "match_type": "manual",
+        "old_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "违反本法规定，<span class=\"diff-added\">构</span><span class=\"diff-added\">成</span><span class=\"diff-added\">违</span><span class=\"diff-added\">反</span><span class=\"diff-added\">治</span><span class=\"diff-added\">安</span><span class=\"diff-added\">管</span><span class=\"diff-added\">理</span><span class=\"diff-added\">行</span><span class=\"diff-added\">为</span><span class=\"diff-added\">的</span><span class=\"diff-added\">，</span><span class=\"diff-added\">依</span><span class=\"diff-added\">法</span><span class=\"diff-added\">给</span><span class=\"diff-added\">予</span><span class=\"diff-added\">治</span><span class=\"diff-added\">安</span><span class=\"diff-added\">管</span><span class=\"diff-added\">理</span><span class=\"diff-added\">处</span><span class=\"diff-added\">罚</span><span class=\"diff-added\">；</span>构成犯罪的，依法追究刑事责任。"
+      },
+      {
+        "old_number": 33,
+        "new_number": 41,
+        "old_content": "本法自2018年1月1日起施行。",
+        "new_content": "本法自2025年10月15日起施行。",
+        "similarity": 0.8235294117647058,
+        "match_type": "auto",
+        "old_chapter_info": {
+          "chapter_num": 5,
+          "chapter_title": "附则",
+          "section_num": null,
+          "section_title": ""
+        },
+        "new_chapter_info": {
+          "chapter_num": 5,
+          "chapter_title": "附则",
+          "section_num": null,
+          "section_title": ""
+        },
+        "unified_diff_html": "本法自20<span class=\"diff-deleted\">1</span><span class=\"diff-deleted\">8</span><span class=\"diff-added\">2</span><span class=\"diff-added\">5</span>年1<span class=\"diff-added\">0</span>月1<span class=\"diff-added\">5</span>日起施行。"
+      }
+    ],
+    "new": [
+      {
+        "article_number": 3,
+        "content": "反不正当竞争工作坚持中国共产党的领导。国家健全完善反不正当竞争规则制度，加强反不正当竞争执法司法，维护市场竞争秩序，健全统一、开放、竞争、有序的市场体系。国家建立健全公平竞争审查制度，依法加强公平竞争审查工作，保障各类经营者依法平等使用生产要素、公平参与市场竞争。",
+        "chapter_info": {
+          "chapter_num": 1,
+          "chapter_title": "总则",
+          "section_num": null,
+          "section_title": ""
+        }
+      },
+      {
+        "article_number": 14,
+        "content": "平台经营者不得强制或者变相强制平台内经营者按照其定价规则，以低于成本的价格销售商品，扰乱市场竞争秩序。",
+        "chapter_info": {
+          "chapter_num": 2,
+          "chapter_title": "不正当竞争行为",
+          "section_num": null,
+          "section_title": ""
+        }
+      },
+      {
+        "article_number": 15,
+        "content": "大型企业等经营者不得滥用自身资金、技术、交易渠道、行业影响力等方面的优势地位，要求中小企业接受明显不合理的付款期限、方式、条件和违约责任等交易条件，拖欠中小企业的货物、工程、服务等账款。",
+        "chapter_info": {
+          "chapter_num": 3,
+          "chapter_title": "对涉嫌不正当竞争行为的调查",
+          "section_num": null,
+          "section_title": ""
+        }
+      },
+      {
+        "article_number": 18,
+        "content": "经营者涉嫌违反本法规定的，监督检查部门可以对其有关负责人进行约谈，要求其说明情况、提出改进措施。",
+        "chapter_info": {
+          "chapter_num": 3,
+          "chapter_title": "对涉嫌不正当竞争行为的调查",
+          "section_num": null,
+          "section_title": ""
+        }
+      },
+      {
+        "article_number": 21,
+        "content": "平台经营者应当在平台服务协议和交易规则中明确平台内公平竞争规则，建立不正当竞争举报投诉和纠纷处置机制，引导、规范平台内经营者依法公平竞争；发现平台内经营者实施不正当竞争行为的，应当及时依法采取必要的处置措施，保存有关记录，并按规定向平台经营者住所地县级以上人民政府监督检查部门报告。",
+        "chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        }
+      },
+      {
+        "article_number": 30,
+        "content": "平台经营者违反本法第十四条规定强制或者变相强制平台内经营者以低于成本的价格销售商品的，由监督检查部门责令停止违法行为，处五万元以上五十万元以下的罚款；情节严重的，处五十万元以上二百万元以下的罚款。",
+        "chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        }
+      },
+      {
+        "article_number": 31,
+        "content": "经营者违反本法第十五条规定滥用自身优势地位的，由省级以上人民政府监督检查部门责令限期改正，逾期不改正的，处一百万元以下的罚款；情节严重的，处一百万元以上五百万元以下的罚款。",
+        "chapter_info": {
+          "chapter_num": 4,
+          "chapter_title": "法律责任",
+          "section_num": null,
+          "section_title": ""
+        }
+      },
+      {
+        "article_number": 40,
+        "content": "在中华人民共和国境外实施本法规定的不正当竞争行为，扰乱境内市场竞争秩序，损害境内经营者或者消费者的合法权益的，依照本法以及有关法律的规定处理。",
+        "chapter_info": {
+          "chapter_num": 5,
+          "chapter_title": "附则",
+          "section_num": null,
+          "section_title": ""
+        }
+      }
+    ],
+    "deleted": [],
+    "mapping": {
+      "6": 7,
+      "11": 12,
+      "12": 13,
+      "18": 23,
+      "19": 24,
+      "24": 29,
+      "31": 38,
+      "1": 1,
+      "2": 2,
+      "3": 4,
+      "4": 5,
+      "5": 6,
+      "7": 8,
+      "8": 9,
+      "9": 10,
+      "10": 11,
+      "13": 16,
+      "14": 17,
+      "15": 19,
+      "16": 20,
+      "17": 22,
+      "20": 25,
+      "21": 26,
+      "22": 27,
+      "23": 28,
+      "25": 32,
+      "26": 33,
+      "27": 34,
+      "28": 35,
+      "29": 36,
+      "30": 37,
+      "32": 39,
+      "33": 41
+    },
+    "statistics": {
+      "total_articles_v1": 33,
+      "total_articles_v2": 41,
+      "identical_count": 10,
+      "modified_count": 23,
+      "new_count": 8,
+      "deleted_count": 0,
+      "manual_matches_count": 7,
+      "auto_matches_count": 26
+    }
+  }
+};
+
+        class ComparisonViewer {
+            constructor() {
+                this.data = COMPARISON_DATA;
+                this.currentFilter = 'all';
+                this.collapsedSections = new Set();
+                
+                // 数据验证
+                if (!this.data || !this.data.comparison_result) {
+                    console.error('数据格式错误:', this.data);
+                    return;
+                }
+                
+                this.init();
+            }
+
+            init() {
+                try {
+                    console.log('初始化比较查看器...', this.data);
+                    this.setupEventListeners();
+                    this.renderMetadata();
+                    this.renderStats();
+                    this.renderContent();
+                    console.log('比较查看器初始化完成');
+                } catch (error) {
+                    console.error('初始化失败:', error);
+                }
+            }
+
+            setupEventListeners() {
+                document.querySelectorAll('.filter-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        this.setFilter(e.target.dataset.filter);
+                    });
+                });
+            }
+
+            setFilter(filter) {
+                this.currentFilter = filter;
+                
+                document.querySelectorAll('.filter-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+                
+                this.renderContent();
+            }
+
+            renderMetadata() {
+                const metadata = this.data.metadata;
+                const metadataEl = document.getElementById('metadata');
+                
+                metadataEl.innerHTML = `
+                    <div class="metadata-item">
+                        <span class="metadata-label">原版文件：</span>
+                        ${metadata.law1_file}
+                    </div>
+                    <div class="metadata-item">
+                        <span class="metadata-label">新版文件：</span>
+                        ${metadata.law2_file}
+                    </div>
+                `;
+            }
+
+            renderStats() {
+                const result = this.data.comparison_result;
+                document.getElementById('identicalCount').textContent = (result.identical || []).length;
+                document.getElementById('modifiedCount').textContent = (result.modified || []).length;
+                document.getElementById('deletedCount').textContent = (result.deleted || []).length;
+                document.getElementById('newCount').textContent = (result.new || []).length;
+            }
+
+            renderContent() {
+                const contentEl = document.getElementById('content');
+                const result = this.data.comparison_result;
+                
+                let html = '';
+
+                if (this.currentFilter === 'all' || this.currentFilter === 'modified') {
+                    html += this.renderSection('modified', '修改的条文', result.modified || [], 'modified');
+                }
+                
+                if (this.currentFilter === 'all' || this.currentFilter === 'identical') {
+                    html += this.renderSection('identical', '相同的条文', result.identical || [], 'identical');
+                }
+                
+                if (this.currentFilter === 'all' || this.currentFilter === 'deleted') {
+                    html += this.renderSection('deleted', '删除的条文', result.deleted || [], 'deleted');
+                }
+                
+                if (this.currentFilter === 'all' || this.currentFilter === 'new') {
+                    html += this.renderSection('new', '新增的条文', result.new || [], 'new');
+                }
+
+                contentEl.innerHTML = html;
+            }
+
+            renderSection(sectionId, title, articles, type) {
+                if (!articles || articles.length === 0) {
+                    return `
+                        <div class="section section-${type}">
+                            <div class="section-title">
+                                <span>${title} (0)</span>
+                                <span class="toggle-icon">▼</span>
+                            </div>
+                            <div class="articles-list">
+                                <div class="empty-section">暂无${title.replace('的条文', '')}条文</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const isCollapsed = this.collapsedSections.has(sectionId);
+                const articlesHtml = articles.map((article, index) => {
+                    return this.renderArticle(article, type, `${sectionId}-${index}`);
+                }).join('');
+
+                return `
+                    <div class="section section-${type}">
+                        <div class="section-title ${isCollapsed ? 'collapsed' : ''}" 
+                             onclick="window.comparisonViewer && window.comparisonViewer.toggleSection('${sectionId}')">
+                            <span>${title} (${articles.length})</span>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div class="articles-list ${isCollapsed ? 'collapsed' : ''}">
+                            ${articlesHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderArticle(article, type, articleId) {
+                const similarity = article.similarity || 1.0;
+                const similarityClass = similarity >= 0.9 ? '' : similarity >= 0.7 ? 'medium' : 'low';
+                
+                let headerInfo = '';
+                let contentHtml = '';
+
+                if (type === 'modified') {
+                    headerInfo = `
+                        <div class="article-meta">
+                            <span class="similarity-badge ${similarityClass}">
+                                ${Math.round(similarity * 100)}%
+                            </span>
+                            <span class="chapter-info">
+                                第${article.old_number}条 → 第${article.new_number}条
+                            </span>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                    `;
+                    
+                    // 原版内容和新版内容面板只显示纯文本
+                    let diffContent = `
+                        <div class="diff-container">
+                            <div class="diff-panel diff-old">
+                                <div class="diff-header">原版内容（第${article.old_number}条）</div>
+                                <div class="diff-content">${this.escapeHtml(article.old_content)}</div>
+                            </div>
+                            <div class="diff-panel diff-new">
+                                <div class="diff-header">新版内容（第${article.new_number}条）</div>
+                                <div class="diff-content">${this.escapeHtml(article.new_content)}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 添加统一对比视图
+                    let unifiedDiff = '';
+                    if (article.unified_diff_html) {
+                        unifiedDiff = `
+                            <div class="unified-diff">
+                                <div class="unified-diff-header">统一对比视图</div>
+                                <div class="unified-diff-content">${article.unified_diff_html}</div>
+                            </div>
+                        `;
+                    }
+                    
+                    contentHtml = `
+                        ${diffContent}
+                        ${unifiedDiff}
+                        ${this.renderChapterInfo(article)}
+                    `;
+                } else if (type === 'identical') {
+                    headerInfo = `
+                        <div class="article-meta">
+                            <span class="similarity-badge">100%</span>
+                            <span class="chapter-info">
+                                第${article.old_number}条 → 第${article.new_number}条
+                            </span>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                    `;
+                    
+                    contentHtml = `
+                        <div class="identical-content">${this.escapeHtml(article.content)}</div>
+                    `;
+                } else {
+                    const number = article.article_number || article.old_number || article.new_number;
+                    headerInfo = `
+                        <div class="article-meta">
+                            <span class="chapter-info">第${number}条</span>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                    `;
+                    
+                    contentHtml = `
+                        <div class="identical-content">${this.escapeHtml(article.content)}</div>
+                        ${this.renderChapterInfo(article)}
+                    `;
+                }
+
+                const number = article.article_number || article.old_number || article.new_number;
+                
+                return `
+                    <div class="article-item">
+                        <div class="article-header" onclick="window.comparisonViewer && window.comparisonViewer.toggleArticle('${articleId}')">
+                            <div class="article-number">第${number}条</div>
+                            ${headerInfo}
+                        </div>
+                        <div class="article-content" id="content-${articleId}">
+                            ${contentHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+
+
+            renderChapterInfo(article) {
+                if (!article.old_chapter_info && !article.new_chapter_info && !article.chapter_info) {
+                    return '';
+                }
+                
+                let chapterHtml = '<div class="changes-list"><div class="changes-title">📚 章节信息</div>';
+                
+                if (article.old_chapter_info) {
+                    const oldChapter = article.old_chapter_info;
+                    chapterHtml += `<div class="change-item">原版：第${oldChapter.chapter_num}章《${oldChapter.chapter_title}》</div>`;
+                }
+                
+                if (article.new_chapter_info) {
+                    const newChapter = article.new_chapter_info;
+                    chapterHtml += `<div class="change-item">新版：第${newChapter.chapter_num}章《${newChapter.chapter_title}》</div>`;
+                }
+                
+                if (article.chapter_info) {
+                    const chapter = article.chapter_info;
+                    chapterHtml += `<div class="change-item">章节：第${chapter.chapter_num}章《${chapter.chapter_title}》</div>`;
+                }
+                
+                chapterHtml += '</div>';
+                return chapterHtml;
+            }
+
+            toggleSection(sectionId) {
+                if (this.collapsedSections.has(sectionId)) {
+                    this.collapsedSections.delete(sectionId);
+                } else {
+                    this.collapsedSections.add(sectionId);
+                }
+                this.renderContent();
+            }
+
+            toggleArticle(articleId) {
+                const content = document.getElementById(`content-${articleId}`);
+                const header = content.previousElementSibling;
+                
+                if (content.classList.contains('expanded')) {
+                    content.classList.remove('expanded');
+                    header.classList.remove('expanded');
+                } else {
+                    content.classList.add('expanded');
+                    header.classList.add('expanded');
+                }
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            showError(message) {
+                const contentEl = document.getElementById('content');
+                contentEl.innerHTML = `
+                    <div style="text-align: center; padding: 50px; color: #dc3545;">
+                        <h3>❌ 错误</h3>
+                        <p>${message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 全局实例
+        window.comparisonViewer = null;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            window.comparisonViewer = new ComparisonViewer();
+        });
+    </script>
+</body>
+</html>

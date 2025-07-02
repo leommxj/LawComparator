@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>法律条文手动匹配工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .file-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-left: auto;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .main-content {
+            display: flex;
+            height: 700px;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e9ecef;
+        }
+
+        .panel:last-child {
+            border-right: none;
+        }
+
+        .panel-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #495057;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .article-item {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .article-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .article-item.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3), 0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .article-item.matched {
+            border-color: #28a745;
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .article-item.matched.selected {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3), 0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .article-item.auto-matched {
+            border-color: #17a2b8;
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .article-item.auto-matched.selected {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.3), 0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .article-item.hidden {
+            display: none;
+        }
+
+        .article-number {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            color: #667eea;
+        }
+
+        .article-item.selected .article-number,
+        .article-item.matched.selected .article-number {
+            color: white;
+        }
+
+        .article-item.matched .article-number {
+            color: #28a745;
+        }
+
+        .article-content {
+            font-size: 14px;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .match-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #28a745;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .matches-panel {
+            border-left: 1px solid #e9ecef;
+        }
+
+        .match-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .match-item .match-pair {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .match-item .old-article,
+        .match-item .new-article {
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .match-item .old-article {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .match-item .new-article {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .match-item .remove-match {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            margin-top: 50px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+            font-size: 16px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        .notification.info {
+            background: #17a2b8;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 0;
+            border: none;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .modal-close:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-body {
+            padding: 25px;
+            max-height: 60vh;
+            overflow-y: auto;
+            line-height: 1.8;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .modal-body p {
+            margin: 0 0 15px 0;
+            text-align: justify;
+        }
+
+        .modal-body .article-meta {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .modal-body .article-meta strong {
+            color: #007bff;
+        }
+
+        /* 条文项增加查看提示 */
+        .article-item {
+            position: relative;
+        }
+
+        .article-item::after {
+            content: "👆 点击选择 👁️ 双击查看";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        .article-item:hover::after {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .panel {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .stats {
+                margin-left: 0;
+                justify-content: center;
+            }
+            
+            /* 移动设备上的模态框优化 */
+            .modal-content {
+                width: 95%;
+                margin: 2% auto;
+                max-height: 95vh;
+            }
+            
+            .modal-body {
+                padding: 15px;
+                max-height: 70vh;
+            }
+            
+            .article-item::after {
+                content: "👆 点选";
+                font-size: 10px;
+                padding: 2px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>法律条文手动匹配工具</h1>
+            <p>📌 <strong>操作说明：</strong>点击条文选择/取消选择，两边都选中时自动建立匹配 • 双击条文查看全文内容</p>
+        </div>
+
+        <div class="controls">
+            <label for="dataFile" class="file-label">📁 加载对比数据</label>
+            <input type="file" id="dataFile" class="file-input" accept=".json">
+            
+            <button class="btn" onclick="saveMatches()">💾 保存匹配结果</button>
+            <button class="btn btn-secondary" onclick="loadMatches()">📤 加载匹配结果</button>
+            <button class="btn btn-danger" onclick="clearMatches()">🗑️ 清空匹配</button>
+            
+            <button class="btn" id="toggleView" onclick="toggleViewMode()" style="background: linear-gradient(135deg, #fd7e14 0%, #e76500 100%);">
+                👁️ 显示所有条文
+            </button>
+            
+            <div class="stats">
+                <span>原版条文: <strong id="originalCount">0</strong></span>
+                <span>新版条文: <strong id="newVersionCount">0</strong></span>
+                <span>手动匹配: <strong id="matchedCount">0</strong></span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="panel">
+                <div class="panel-header" id="oldPanelHeader" style="background: #fff3cd; color: #856404;">
+                    📉 原版法条 (未匹配)
+                </div>
+                <div class="panel-content" id="oldPanel">
+                    <div class="loading">请先加载对比数据文件</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header" id="newPanelHeader" style="background: #d1ecf1; color: #0c5460;">
+                    📈 新版法条 (未匹配)
+                </div>
+                <div class="panel-content" id="newPanel">
+                    <div class="loading">请先加载对比数据文件</div>
+                </div>
+            </div>
+
+            <div class="panel matches-panel">
+                <div class="panel-header" style="background: #d4edda; color: #155724;">
+                    🔗 匹配关系 (<span id="matchCount">0</span>)
+                </div>
+                <div class="panel-content" id="matchesPanel">
+                    <div class="empty-state">暂无匹配关系</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <!-- 查看全文模态框 -->
+    <div id="articleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">条文详情</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 内容将通过JavaScript填充 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let comparisonData = null;
+        let manualMatches = [];
+        let selectedOld = null;
+        let selectedNew = null;
+        let currentDeletedArticles = [];
+        let currentNewArticles = [];
+        let allOldArticles = [];
+        let allNewArticles = [];
+        let autoMatches = [];
+        let showAllArticles = false;
+
+        // 加载对比数据
+        document.getElementById('dataFile').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        comparisonData = JSON.parse(e.target.result);
+                        loadData();
+                        showNotification('数据加载成功！');
+                    } catch (error) {
+                        showNotification('数据格式错误：' + error.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function loadData() {
+            if (!comparisonData) return;
+
+            // 支持两种数据格式：直接格式和嵌套格式
+            let deletedArticles, newArticles, identicalArticles, modifiedArticles, mapping;
+            
+            if (comparisonData.comparison_result) {
+                // 嵌套格式（从法律条文对比数据.json）
+                const result = comparisonData.comparison_result;
+                deletedArticles = result.deleted || result.deleted_articles || [];
+                newArticles = result.new || result.new_articles || [];
+                identicalArticles = result.identical || [];
+                modifiedArticles = result.modified || [];
+                mapping = result.mapping || {};
+            } else {
+                // 直接格式
+                deletedArticles = comparisonData.deleted || comparisonData.deleted_articles || [];
+                newArticles = comparisonData.new || comparisonData.new_articles || [];
+                identicalArticles = comparisonData.identical || [];
+                modifiedArticles = comparisonData.modified || [];
+                mapping = comparisonData.mapping || {};
+            }
+
+            // 构建所有原版条文数据
+            allOldArticles = [
+                ...deletedArticles.map(article => ({...article, article_number: String(article.article_number), status: 'deleted'})),
+                ...identicalArticles.map(article => ({
+                    article_number: String(article.old_number),
+                    content: article.content,
+                    status: 'identical',
+                    matched_to: String(article.new_number)
+                })),
+                ...modifiedArticles.map(article => ({
+                    article_number: String(article.old_number),
+                    content: article.old_content,
+                    status: 'modified',
+                    matched_to: String(article.new_number)
+                }))
+            ].sort((a, b) => parseInt(a.article_number) - parseInt(b.article_number));
+
+            // 构建所有新版条文数据
+            allNewArticles = [
+                ...newArticles.map(article => ({...article, article_number: String(article.article_number), status: 'new'})),
+                ...identicalArticles.map(article => ({
+                    article_number: String(article.new_number),
+                    content: article.content,
+                    status: 'identical',
+                    matched_from: String(article.old_number)
+                })),
+                ...modifiedArticles.map(article => ({
+                    article_number: String(article.new_number),
+                    content: article.new_content,
+                    status: 'modified',
+                    matched_from: String(article.old_number)
+                }))
+            ].sort((a, b) => parseInt(a.article_number) - parseInt(b.article_number));
+
+            // 保存数据引用用于兼容性
+            currentDeletedArticles = deletedArticles;
+            currentNewArticles = newArticles;
+
+            // 构建自动匹配关系
+            autoMatches = [
+                ...identicalArticles.map(article => ({
+                    old_number: article.old_number.toString(),
+                    new_number: article.new_number.toString(),
+                    type: 'auto',
+                    similarity: article.similarity || 1.0
+                })),
+                ...modifiedArticles.map(article => ({
+                    old_number: article.old_number.toString(),
+                    new_number: article.new_number.toString(),
+                    type: 'auto',
+                    similarity: article.similarity || 0.8
+                }))
+            ];
+
+            console.log('原版条文总数:', allOldArticles.length);
+            console.log('新版条文总数:', allNewArticles.length);
+            console.log('自动匹配数量:', autoMatches.length);
+
+            renderArticles();
+            updateStats();
+        }
+
+        function renderArticles() {
+            renderOldArticles();
+            renderNewArticles();
+            updatePanelHeaders();
+            updateArticleStatus();
+        }
+
+        function renderOldArticles() {
+            const panel = document.getElementById('oldPanel');
+            
+            // 根据显示模式过滤条文
+            let articlesToShow = allOldArticles;
+            if (!showAllArticles) {
+                articlesToShow = allOldArticles.filter(article => 
+                    article.status === 'deleted' || isManuallyMatched(article.article_number, 'old')
+                );
+            }
+
+            if (articlesToShow.length === 0) {
+                const mode = showAllArticles ? '所有' : '未匹配的';
+                panel.innerHTML = `<div class="empty-state">没有${mode}原版法条</div>`;
+                return;
+            }
+
+            panel.innerHTML = articlesToShow.map((article, index) => {
+                const originalIndex = allOldArticles.findIndex(a => a.article_number === article.article_number);
+                let statusClass = '';
+                let statusIndicator = '';
+                
+                if (isManuallyMatched(article.article_number, 'old')) {
+                    statusClass = 'matched';
+                    statusIndicator = '<div class="match-indicator">✓</div>';
+                } else if (article.status === 'identical' || article.status === 'modified') {
+                    statusClass = 'auto-matched';
+                    statusIndicator = `<div class="match-indicator" style="background: #17a2b8;">🔗</div>`;
+                }
+
+                return `
+                    <div class="article-item ${statusClass}" data-type="old" data-number="${article.article_number}" 
+                         data-index="${originalIndex}" data-status="${article.status}"
+                         onclick="selectArticle(this)" ondblclick="showArticleModalByIndex('old', ${originalIndex})">
+                        <div class="article-number">第${article.article_number}条 ${getStatusBadge(article.status)}</div>
+                        <div class="article-content">${article.content}</div>
+                        ${statusIndicator}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderNewArticles() {
+            const panel = document.getElementById('newPanel');
+            
+            // 根据显示模式过滤条文
+            let articlesToShow = allNewArticles;
+            if (!showAllArticles) {
+                articlesToShow = allNewArticles.filter(article => 
+                    article.status === 'new' || isManuallyMatched(article.article_number, 'new')
+                );
+            }
+
+            if (articlesToShow.length === 0) {
+                const mode = showAllArticles ? '所有' : '未匹配的';
+                panel.innerHTML = `<div class="empty-state">没有${mode}新版法条</div>`;
+                return;
+            }
+
+            panel.innerHTML = articlesToShow.map((article, index) => {
+                const originalIndex = allNewArticles.findIndex(a => a.article_number === article.article_number);
+                let statusClass = '';
+                let statusIndicator = '';
+                
+                if (isManuallyMatched(article.article_number, 'new')) {
+                    statusClass = 'matched';
+                    statusIndicator = '<div class="match-indicator">✓</div>';
+                } else if (article.status === 'identical' || article.status === 'modified') {
+                    statusClass = 'auto-matched';
+                    statusIndicator = `<div class="match-indicator" style="background: #17a2b8;">🔗</div>`;
+                }
+
+                return `
+                    <div class="article-item ${statusClass}" data-type="new" data-number="${article.article_number}" 
+                         data-index="${originalIndex}" data-status="${article.status}"
+                         onclick="selectArticle(this)" ondblclick="showArticleModalByIndex('new', ${originalIndex})">
+                        <div class="article-number">第${article.article_number}条 ${getStatusBadge(article.status)}</div>
+                        <div class="article-content">${article.content}</div>
+                        ${statusIndicator}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'deleted': '<span style="background: #dc3545; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">删除</span>',
+                'new': '<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">新增</span>',
+                'identical': '<span style="background: #17a2b8; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">相同</span>',
+                'modified': '<span style="background: #ffc107; color: #212529; padding: 2px 6px; border-radius: 3px; font-size: 10px;">修改</span>'
+            };
+            return badges[status] || '';
+        }
+
+        function updatePanelHeaders() {
+            const oldHeader = document.getElementById('oldPanelHeader');
+            const newHeader = document.getElementById('newPanelHeader');
+            
+            if (showAllArticles) {
+                oldHeader.innerHTML = '📋 原版法条 (全部)';
+                newHeader.innerHTML = '📋 新版法条 (全部)';
+            } else {
+                oldHeader.innerHTML = '📉 原版法条 (未匹配)';
+                newHeader.innerHTML = '📈 新版法条 (未匹配)';
+            }
+        }
+
+        function toggleViewMode() {
+            showAllArticles = !showAllArticles;
+            const toggleBtn = document.getElementById('toggleView');
+            
+            if (showAllArticles) {
+                toggleBtn.innerHTML = '👁️ 只显示未匹配';
+                toggleBtn.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+            } else {
+                toggleBtn.innerHTML = '👁️ 显示所有条文';
+                toggleBtn.style.background = 'linear-gradient(135deg, #fd7e14 0%, #e76500 100%)';
+            }
+            
+            renderArticles();
+            showNotification(showAllArticles ? '已切换到显示所有条文' : '已切换到只显示未匹配条文', 'info');
+        }
+
+        function selectArticle(element) {
+            const type = element.dataset.type;
+            const number = element.dataset.number;
+            const status = element.dataset.status;
+            const isCurrentlySelected = element.classList.contains('selected');
+
+            if (isCurrentlySelected) {
+                // 如果当前条文已被选中，则取消选择
+                element.classList.remove('selected');
+                
+                if (type === 'old') {
+                    selectedOld = null;
+                } else {
+                    selectedNew = null;
+                }
+                
+                showNotification(`已取消选择第${number}条`, 'info');
+            } else {
+                // 检查是否试图选择已有自动匹配的条文
+                if ((status === 'identical' || status === 'modified') && !showAllArticles) {
+                    showNotification(`第${number}条已有自动匹配，请切换到"显示所有条文"模式进行重新匹配`, 'info');
+                    return;
+                }
+
+                // 清除同类型的其他选择
+                document.querySelectorAll(`[data-type="${type}"]`).forEach(el => {
+                    el.classList.remove('selected');
+                });
+
+                // 选择当前项
+                element.classList.add('selected');
+
+                if (type === 'old') {
+                    selectedOld = number;
+                } else {
+                    selectedNew = number;
+                }
+
+                const statusText = status ? ` (${getStatusText(status)})` : '';
+                showNotification(`已选择第${number}条${statusText}`, 'info');
+
+                // 如果两边都有选择，创建匹配
+                if (selectedOld && selectedNew) {
+                    createMatch(selectedOld, selectedNew);
+                    clearSelections();
+                }
+            }
+        }
+
+        function getStatusText(status) {
+            const statusTexts = {
+                'deleted': '删除',
+                'new': '新增',
+                'identical': '相同',
+                'modified': '修改'
+            };
+            return statusTexts[status] || status;
+        }
+
+        function createMatch(oldNumber, newNumber) {
+            // 检查是否已经存在手动匹配
+            const existingManualMatch = manualMatches.find(match => 
+                match.old_number === String(oldNumber) || match.new_number === String(newNumber)
+            );
+
+            if (existingManualMatch) {
+                showNotification(`第${oldNumber}条或第${newNumber}条已有手动匹配关系`, 'error');
+                return;
+            }
+
+            // 检查是否存在自动匹配
+            const existingAutoMatch = autoMatches.find(match =>
+                match.old_number === String(oldNumber) || match.new_number === String(newNumber)
+            );
+
+            let message = `匹配成功：第${oldNumber}条 ↔ 第${newNumber}条`;
+            if (existingAutoMatch) {
+                message += ' (覆盖了自动匹配)';
+            }
+
+            // 添加新匹配
+            manualMatches.push({
+                old_number: String(oldNumber),
+                new_number: String(newNumber),
+                type: 'manual'
+            });
+
+            // 更新显示
+            renderMatches();
+            renderArticles(); // 重新渲染以更新状态
+            updateStats();
+            showNotification(message);
+        }
+
+        function removeMatch(index) {
+            manualMatches.splice(index, 1);
+            renderMatches();
+            renderArticles(); // 重新渲染以更新状态
+            updateStats();
+            showNotification('匹配关系已删除');
+        }
+
+        function renderMatches() {
+            const panel = document.getElementById('matchesPanel');
+            const matchCount = document.getElementById('matchCount');
+            
+            matchCount.textContent = manualMatches.length;
+
+            if (manualMatches.length === 0) {
+                panel.innerHTML = '<div class="empty-state">暂无匹配关系</div>';
+                return;
+            }
+
+            panel.innerHTML = manualMatches.map((match, index) => `
+                <div class="match-item">
+                    <div class="match-pair">
+                        <div class="old-article">第${match.old_number}条</div>
+                        <div style="color: #6c757d;">↔</div>
+                        <div class="new-article">第${match.new_number}条</div>
+                    </div>
+                    <button class="remove-match" onclick="removeMatch(${index})" title="删除匹配">×</button>
+                </div>
+            `).join('');
+        }
+
+        function updateArticleStatus() {
+            // 这个函数现在在renderArticles中处理，保留为兼容性
+        }
+
+        function isManuallyMatched(number, type) {
+            if (type === 'old') {
+                return manualMatches.some(match => match.old_number === String(number));
+            } else {
+                return manualMatches.some(match => match.new_number === String(number));
+            }
+        }
+
+        function isAutoMatched(number, type) {
+            if (type === 'old') {
+                return autoMatches.some(match => match.old_number === String(number));
+            } else {
+                return autoMatches.some(match => match.new_number === String(number));
+            }
+        }
+
+        function clearSelections() {
+            document.querySelectorAll('.article-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            selectedOld = null;
+            selectedNew = null;
+        }
+
+        function updateStats() {
+            if (!comparisonData) return;
+
+            const originalCount = allOldArticles.length;
+            const newVersionCount = allNewArticles.length;
+            const matchedCount = manualMatches.length;
+
+            document.getElementById('originalCount').textContent = originalCount;
+            document.getElementById('newVersionCount').textContent = newVersionCount;
+            document.getElementById('matchedCount').textContent = matchedCount;
+        }
+
+        function saveMatches() {
+            if (manualMatches.length === 0) {
+                showNotification('没有匹配关系可保存', 'error');
+                return;
+            }
+
+            const data = {
+                manual_matches: manualMatches,
+                total_matches: manualMatches.length
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'manual_matches.json';
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showNotification(`已保存 ${manualMatches.length} 个匹配关系`);
+        }
+
+        function loadMatches() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            manualMatches = data.manual_matches || [];
+                            renderMatches();
+                            renderArticles(); // 重新渲染以更新状态
+                            updateStats();
+                            showNotification(`已加载 ${manualMatches.length} 个匹配关系`);
+                        } catch (error) {
+                            showNotification('匹配文件格式错误：' + error.message, 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        function clearMatches() {
+            if (confirm('确定要清空所有匹配关系吗？')) {
+                manualMatches = [];
+                renderMatches();
+                renderArticles(); // 重新渲染以更新状态
+                updateStats();
+                showNotification('已清空所有匹配关系');
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 通过索引显示条文全文模态框
+        function showArticleModalByIndex(type, index) {
+            const modal = document.getElementById('articleModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            // 获取条文数据
+            let article;
+            if (type === 'old') {
+                article = allOldArticles[index];
+            } else if (type === 'new') {
+                article = allNewArticles[index];
+            } else if (type === 'deleted') {
+                // 兼容性支持
+                article = currentDeletedArticles[index];
+            } else {
+                // 兼容性支持
+                article = currentNewArticles[index];
+            }
+            
+            if (!article) {
+                showNotification('条文数据不存在', 'error');
+                return;
+            }
+            
+            // 设置标题和颜色
+            const statusTexts = {
+                'deleted': { text: '删除的法条', color: '#dc3545' },
+                'new': { text: '新增的法条', color: '#28a745' },
+                'identical': { text: '相同的法条', color: '#17a2b8' },
+                'modified': { text: '修改的法条', color: '#ffc107' },
+                'old': { text: '原版法条', color: '#856404' }
+            };
+            
+            const statusInfo = statusTexts[article.status] || statusTexts[type] || { text: '法条', color: '#6c757d' };
+            modalTitle.innerHTML = `<span style="color: ${statusInfo.color};">${statusInfo.text}</span> - 第${article.article_number}条`;
+            
+            // 格式化内容
+            const paragraphs = article.content.split('\n').filter(p => p.trim());
+            const formattedContent = paragraphs.map(p => `<p>${p.trim()}</p>`).join('');
+            
+            // 构建匹配信息
+            let matchInfo = '';
+            if (article.status === 'identical' || article.status === 'modified') {
+                const matchedTo = article.matched_to || article.matched_from;
+                if (matchedTo) {
+                    matchInfo = `<strong>自动匹配：</strong>第${matchedTo}条<br>`;
+                }
+            }
+            if (isManuallyMatched(article.article_number, type)) {
+                const manualMatch = manualMatches.find(match => 
+                    match.old_number === String(article.article_number) || match.new_number === String(article.article_number)
+                );
+                if (manualMatch) {
+                    const targetNumber = manualMatch.old_number === String(article.article_number) ? manualMatch.new_number : manualMatch.old_number;
+                    matchInfo += `<strong>手动匹配：</strong>第${targetNumber}条<br>`;
+                }
+            }
+            
+            modalBody.innerHTML = `
+                <div class="article-meta">
+                    <strong>条文编号：</strong>第${article.article_number}条<br>
+                    <strong>条文状态：</strong>${statusInfo.text}<br>
+                    ${matchInfo}
+                    <strong>内容长度：</strong>${article.content.length}字符<br>
+                    <strong>段落数量：</strong>${paragraphs.length}段
+                </div>
+                <div class="article-full-content">
+                    ${formattedContent}
+                </div>
+            `;
+            
+            // 显示模态框
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // 防止背景滚动
+            
+            // 阻止事件冒泡（防止同时触发选择事件）
+            event.stopPropagation();
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            const modal = document.getElementById('articleModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto'; // 恢复背景滚动
+        }
+
+        // 点击模态框背景关闭
+        document.getElementById('articleModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeModal();
+            }
+        });
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey || event.metaKey) {
+                switch (event.key) {
+                    case 's':
+                        event.preventDefault();
+                        saveMatches();
+                        break;
+                    case 'o':
+                        event.preventDefault();
+                        loadMatches();
+                        break;
+                }
+            }
+            if (event.key === 'Escape') {
+                // 如果模态框打开，先关闭模态框
+                const modal = document.getElementById('articleModal');
+                if (modal.style.display === 'block') {
+                    closeModal();
+                } else {
+                    clearSelections();
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

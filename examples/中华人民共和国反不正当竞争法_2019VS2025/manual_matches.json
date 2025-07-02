@@ -1,0 +1,40 @@
+{
+  "manual_matches": [
+    {
+      "old_number": "6",
+      "new_number": "7",
+      "type": "manual"
+    },
+    {
+      "old_number": "11",
+      "new_number": "12",
+      "type": "manual"
+    },
+    {
+      "old_number": "12",
+      "new_number": "13",
+      "type": "manual"
+    },
+    {
+      "old_number": "18",
+      "new_number": "23",
+      "type": "manual"
+    },
+    {
+      "old_number": "19",
+      "new_number": "24",
+      "type": "manual"
+    },
+    {
+      "old_number": "24",
+      "new_number": "29",
+      "type": "manual"
+    },
+    {
+      "old_number": "31",
+      "new_number": "38",
+      "type": "manual"
+    }
+  ],
+  "total_matches": 7
+}
